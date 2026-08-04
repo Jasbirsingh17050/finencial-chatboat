@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinanceVision | Financial Intelligence Engine</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #0a0a0a; color: #ffffff; }
+        .glass-panel { background: rgba(17, 17, 17, 0.9); border: 1px solid rgba(220, 38, 38, 0.2); }
+        .marquee-container { overflow: hidden; position: relative; }
+        .marquee-content { display: flex; animation: scroll-left 40s linear infinite; min-width: 200%; }
+        .marquee-content:hover { animation-play-state: paused; }
+        @keyframes scroll-left { 0% { transform: translateX(50vw); } 100% { transform: translateX(-100%); } }
+        .ticker-wrap { overflow: hidden; height: 100%; position: relative; }
+        .ticker-move { animation: ticker-vertical 40s linear infinite; }
+        .ticker-move:hover { animation-play-state: paused; }
+        @keyframes ticker-vertical { 0% { transform: translateY(0); } 100% { transform: translateY(-50%); } }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(220, 38, 38, 0.3); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(220, 38, 38, 0.6); }
+
+        .ai-content h1, .ai-content h2, .ai-content h3 { color: #ffffff; font-weight: bold; margin-top: 1.25rem; margin-bottom: 0.5rem; letter-spacing: -0.025em; }
+        .ai-content h3 { font-size: 1.1rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.25rem; }
+        .ai-content p { margin-bottom: 1rem; color: #cbd5e1; }
+        .ai-content ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 1rem; color: #94a3b8; }
+        .ai-content ol { list-style-type: decimal; padding-left: 1.5rem; margin-bottom: 1rem; color: #94a3b8; }
+        .ai-content li { margin-bottom: 0.25rem; }
+        .ai-content strong { color: #ffffff; font-weight: 600; }
+        .ai-content em { color: #f87171; font-style: normal; }
+
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        .toast-enter { animation: slideInRight 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+        .toast-exit { animation: fadeOut 0.4s forwards; }
+    </style>
+</head>
+<body class="h-screen w-screen overflow-hidden flex flex-col">
+
+    <div id="toast-container" class="fixed top-6 right-6 z-[9999] flex flex-col gap-3 pointer-events-none"></div>
+
+    <div id="auth-screen" class="fixed inset-0 z-50 flex font-sans bg-[#0a0a0a] text-white">
+        <div class="hidden md:flex w-1/2 relative flex-col justify-center p-16 bg-cover bg-center shadow-[inset_-20px_0_30px_rgba(0,0,0,0.8)]" style="background-image: linear-gradient(to right, rgba(10,10,10,0.95), rgba(10,10,10,0.4)), url('https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?q=80&w=2070&auto=format&fit=crop');">
+            <div class="flex items-center gap-4 mb-6">
+                <div class="relative inline-block">
+                    <i class="ph-fill ph-briefcase text-5xl text-white"></i>
+                    <i class="ph-fill ph-coin text-2xl text-yellow-500 absolute -bottom-2 -right-2 drop-shadow-md"></i>
+                </div>
+                <h1 class="text-4xl font-bold text-white tracking-wide">Welcome to <span class="text-red-500">FinanceVision</span></h1>
+            </div>
+            <p class="text-lg text-gray-400 max-w-md leading-relaxed">Your gateway to elite financial intelligence. Access global markets, mathematical tools, and intelligent document analysis all in one place.</p>
+        </div>
+        
+        <div class="w-full md:w-1/2 flex items-center justify-center bg-[#0a0a0a] relative p-4">
+            <div class="w-full max-w-md p-8 glass-panel rounded-3xl shadow-2xl">
+                <div class="flex justify-center mb-6">
+                    <div class="w-16 h-16 bg-red-900/20 border border-red-500/30 rounded-2xl flex items-center justify-center shadow-[0_0_20px_rgba(220,38,38,0.15)] relative">
+                        <i class="ph-fill ph-briefcase text-3xl text-red-500"></i>
+                        <i class="ph-fill ph-coin text-xl text-yellow-500 absolute bottom-2 right-2 drop-shadow-md"></i>
+                    </div>
+                </div>
+                <h2 class="text-3xl font-bold text-center text-white mb-2 tracking-tight">FinanceVision Access</h2>
+                <p id="auth-subtitle" class="text-slate-400 text-center mb-6 text-sm">Secure Terminal Login</p>
+                
+                <div id="login-fields">
+                    <div class="flex justify-center w-full mb-6">
+                        <div id="g_id_onload" data-client_id="821624153227-iv1e6v75dbdt5ojkacugvd4gjm6ajqo0.apps.googleusercontent.com" data-callback="handleCredentialResponse"></div>
+                        <div class="g_id_signin" data-type="standard" data-theme="outline" data-text="continue_with" data-shape="rectangular" data-logo_alignment="center" data-width="350"></div>
+                    </div>
+                    
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="h-px bg-slate-800 flex-1"></div>
+                        <span class="text-xs text-slate-500 font-bold tracking-widest uppercase">OR EMAIL / PHONE</span>
+                        <div class="h-px bg-slate-800 flex-1"></div>
+                    </div>
+                    
+                    <input type="text" id="contact-id" placeholder="Email Address or Mobile Number" class="w-full bg-[#111111] border border-slate-700 rounded-xl px-4 py-3.5 mb-4 text-white font-medium outline-none focus:border-red-500 transition-all placeholder:text-slate-500 text-sm">
+                    
+                    <div class="relative w-full mb-6">
+                        <input type="password" id="password" placeholder="Password (8+ chars, 1 uppercase, 1 number)" class="w-full bg-[#111111] border border-slate-700 rounded-xl px-4 py-3.5 text-white font-medium outline-none focus:border-red-500 transition-all placeholder:text-slate-500 pr-12 text-sm">
+                        <button type="button" onclick="togglePassword()" class="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-500 hover:text-white transition-colors">
+                            <i id="password-eye-icon" class="ph-bold ph-eye text-xl"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="flex gap-4 flex-col">
+                        <button onclick="login()" id="login-btn" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-3.5 rounded-xl transition-colors border border-slate-700 text-sm">Authenticate (Login)</button>
+                        <button onclick="signup()" id="signup-btn" class="w-full bg-red-700 hover:bg-red-600 text-white font-bold py-3.5 rounded-xl transition-colors shadow-[0_4px_15px_rgba(220,38,38,0.3)] text-sm">Create Clearance (Sign Up)</button>
+                    </div>
+                </div>
+
+                <div id="otp-fields" class="hidden flex-col gap-4">
+                    <div class="text-center mb-2">
+                        <i class="ph-bold ph-shield-check text-4xl text-red-500 mb-2"></i>
+                        <p class="text-sm text-slate-300">Enter the 6-digit security code sent to your contact.</p>
+                    </div>
+                    <input type="text" id="otp-input" placeholder="000000" maxlength="6" class="w-full bg-[#111111] border border-slate-700 rounded-xl px-4 py-4 mb-1 text-white font-black text-center text-2xl tracking-[0.5em] outline-none focus:border-red-500 transition-all placeholder:text-slate-600">
+                    
+                    <div class="flex justify-between items-center px-1 mb-2">
+                        <span id="otp-timer" class="text-xs font-mono text-slate-400">Resend in <strong id="timer-sec" class="text-red-400">60</strong>s</span>
+                        <button id="resend-btn" onclick="resendOTPCode()" disabled class="text-xs font-bold text-slate-600 cursor-not-allowed hover:text-red-400 transition-colors uppercase tracking-wider">Resend Code</button>
+                    </div>
+
+                    <button onclick="verifyOTP()" id="verify-btn" class="w-full bg-red-700 hover:bg-red-600 text-white font-bold py-3.5 rounded-xl transition-colors shadow-[0_4px_15px_rgba(220,38,38,0.3)] text-sm">Verify Identity & Login</button>
+                    <button onclick="location.reload()" class="text-xs text-slate-500 hover:text-white mt-1 text-center">Cancel & Back to Login</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="delete-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm transition-opacity">
+        <div class="bg-[#111] border border-slate-700 p-8 rounded-3xl max-w-sm w-full shadow-2xl">
+            <div class="flex flex-col items-center text-center mb-6">
+                <div class="w-16 h-16 bg-red-900/20 border border-red-500/30 rounded-full flex items-center justify-center mb-4">
+                    <i class="ph-bold ph-trash text-3xl text-red-500"></i>
+                </div>
+                <h3 class="text-white text-xl font-bold mb-2">Delete Analysis Log?</h3>
+                <p class="text-slate-400 text-sm leading-relaxed">This action cannot be undone. Permanently erase session?</p>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="closeDeleteModal()" class="flex-1 py-3 rounded-xl border border-slate-600 text-slate-300 hover:bg-slate-800 font-bold transition-all text-sm">Cancel</button>
+                <button onclick="confirmDeleteSession()" class="flex-1 py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold transition-all shadow-[0_0_15px_rgba(220,38,38,0.2)] text-sm">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="app-screen" class="hidden w-full h-full flex flex-col">
+        <div class="h-10 border-b border-slate-800 bg-[#0a0a0a] flex items-center overflow-hidden shrink-0">
+            <button onclick="toggleMobileSidebar()" class="md:hidden px-3 text-slate-400 hover:text-white border-r border-slate-800 h-full flex items-center">
+                <i class="ph-bold ph-list text-lg"></i>
+            </button>
+            <div class="flex items-center px-4 md:px-6 bg-red-950/30 h-full border-r border-slate-800 z-10 font-bold text-[10px] text-red-400 tracking-widest shrink-0 uppercase shadow-lg">
+                <i class="ph-bold ph-globe-hemisphere mr-2"></i> GLOBAL MARKETS
+            </div>
+            <div class="marquee-container flex-1 h-full relative">
+                <div id="global-ticker" class="marquee-content h-full absolute whitespace-nowrap"></div>
+            </div>
+        </div>
+
+        <div class="flex-1 flex overflow-hidden relative">
+            <div id="sidebar-panel" class="fixed md:relative inset-y-0 left-0 w-72 border-r border-slate-800 bg-[#0a0a0a] flex flex-col p-5 h-full z-30 shrink-0 transform -translate-x-full md:translate-x-0 transition-transform duration-300">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-red-900/20 border border-red-500/30 rounded-xl flex items-center justify-center shadow-[0_0_15px_rgba(220,38,38,0.15)] relative">
+                            <i class="ph-fill ph-briefcase text-2xl text-red-500"></i>
+                            <i class="ph-fill ph-coin text-sm text-yellow-500 absolute bottom-1.5 right-1.5 drop-shadow-md"></i>
+                        </div>
+                        <div>
+                            <h1 class="font-bold text-lg leading-tight tracking-wide">FinanceVision</h1>
+                            <p class="text-[9px] text-red-500 font-bold tracking-widest uppercase">Intelligence Engine</p>
+                        </div>
+                    </div>
+                    <button onclick="toggleMobileSidebar()" class="md:hidden text-slate-500 hover:text-white"><i class="ph-bold ph-x text-lg"></i></button>
+                </div>
+
+                <button onclick="openProfileModal()" class="w-full bg-[#111] border border-slate-800 hover:border-red-500/40 rounded-xl p-2.5 flex items-center gap-3 mb-4 transition-all group shadow-md shrink-0">
+                    <div class="w-9 h-9 rounded-full bg-slate-800 overflow-hidden border border-slate-700 shrink-0 relative" id="sidebar-avatar-container">
+                        <i class="ph-bold ph-user text-slate-400 text-base absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-0"></i>
+                        <img id="sidebar-avatar" src="" class="w-full h-full object-cover hidden absolute inset-0 z-10" />
+                    </div>
+                    <div class="text-left flex-1 overflow-hidden">
+                        <h3 id="sidebar-name" class="text-white text-xs font-bold truncate">Set Up Profile</h3>
+                        <p id="sidebar-role" class="text-[9px] text-red-400 font-bold tracking-widest uppercase truncate">Configure AI</p>
+                    </div>
+                    <i class="ph-bold ph-caret-right text-slate-500 group-hover:text-red-400 transition-colors"></i>
+                </button>
+
+                <button onclick="startNewChat()" class="w-full border border-red-900/50 hover:bg-red-900/20 text-red-400 font-bold py-2 rounded-xl transition-all flex items-center justify-center gap-2 mb-4 text-xs shadow-sm shrink-0">
+                    <i class="ph-bold ph-plus"></i> New Chat
+                </button>
+
+                <div class="text-[10px] font-bold text-slate-500 tracking-widest mb-2 uppercase shrink-0">Recent Sessions</div>
+                
+                <div id="sessions-list" class="flex-1 overflow-y-auto space-y-1.5 pr-2 min-h-[100px] custom-scrollbar"></div>
+
+                <div class="mt-3 pt-3 border-t border-slate-800 shrink-0">
+                    <div class="bg-[#111] border border-slate-800 p-3 rounded-xl mb-3">
+                        <div class="flex items-center gap-2 mb-1">
+                            <i class="ph-fill ph-database text-red-400 text-sm"></i>
+                            <h3 class="font-bold text-xs text-slate-200">Knowledge Base</h3>
+                        </div>
+                        <p class="text-[9px] text-slate-400 mb-2 leading-relaxed">Feed CSVs/PDFs to analyze.</p>
+                        <label for="file-upload" class="cursor-pointer border border-dashed border-slate-600 hover:bg-slate-800 hover:border-red-400/50 rounded-lg p-2 flex flex-col items-center justify-center transition-all">
+                            <i class="ph-bold ph-upload-simple text-red-400 mb-1 text-sm"></i>
+                            <span id="upload-status-text" class="text-[9px] font-semibold text-slate-400 text-center">Upload File</span>
+                        </label>
+                        <input type="file" id="file-upload" class="hidden" accept=".csv,.pdf" onchange="uploadDocument(event)">
+                    </div>
+                    
+                    <button id="export-btn" onclick="exportReport()" class="w-full bg-[#111] hover:bg-slate-800 border border-slate-700 text-white font-bold py-2 rounded-xl transition-all flex items-center justify-center gap-2 text-xs">
+                        <i class="ph-bold ph-download-simple text-sm text-red-400"></i> Export Report
+                    </button>
+
+                    <button onclick="logout()" class="w-full mt-3 text-slate-500 hover:text-red-400 font-bold text-[9px] flex items-center justify-center gap-1.5 transition-colors uppercase tracking-wider">
+                        <i class="ph-bold ph-sign-out text-sm"></i> Terminate Session
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex-1 flex flex-col h-full bg-[#050505] relative min-w-0">
+                <div class="h-14 border-b border-slate-800/50 flex items-center justify-between px-6 shrink-0 bg-[#0a0a0a]/80 backdrop-blur-md z-10">
+                    <div class="flex items-center gap-2">
+                        <div class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.8)]"></div>
+                        <span class="text-[10px] font-bold text-slate-300 tracking-widest uppercase">Secure Terminal Connection</span>
+                    </div>
+                </div>
+
+                <div id="chat-box" class="flex-1 overflow-y-auto p-4 md:p-8 space-y-8 scroll-smooth pb-32"></div>
+
+                <div class="absolute bottom-0 left-0 w-full p-4 md:p-8 bg-gradient-to-t from-[#050505] via-[#050505] to-transparent">
+                    <div class="bg-[#111] border border-slate-700 p-2 rounded-2xl flex items-center gap-3 max-w-4xl mx-auto shadow-2xl relative z-20">
+                        <button id="mic-btn" class="w-12 h-12 rounded-xl bg-slate-800/50 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-red-400 transition-all shrink-0">
+                            <i class="ph-fill ph-microphone text-2xl"></i>
+                        </button>
+                        <input type="text" id="query-input" placeholder="Query the FinanceVision engine..." class="flex-1 bg-transparent text-white outline-none placeholder:text-slate-500 font-medium px-2 text-sm" onkeypress="if(event.key === 'Enter') sendMessage()">
+                        <button id="send-btn" onclick="sendMessage()" class="w-12 h-12 bg-red-700 hover:bg-red-600 text-white rounded-xl flex items-center justify-center transition-all shadow-[0_4px_15px_rgba(220,38,38,0.2)] shrink-0">
+                            <i class="ph-bold ph-paper-plane-right text-xl"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hidden xl:flex w-80 border-l border-slate-800 bg-[#0a0a0a] flex-col h-full z-10 shrink-0">
+                <div class="p-6 border-b border-slate-800 shrink-0 bg-[#0a0a0a]">
+                    <h2 class="font-bold text-white flex items-center gap-2 text-lg">
+                        <i class="ph-bold ph-trend-up text-red-500"></i> Live Markets
+                    </h2>
+                    <p class="text-[11px] text-slate-400 mt-1 font-medium">Real-time indices and watchlists.</p>
+                </div>
+                <div class="flex-1 ticker-wrap p-4">
+                    <div id="live-markets-container" class="ticker-move flex flex-col gap-4"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="profile-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm transition-opacity p-4">
+        <div class="bg-[#111] border border-slate-700 p-8 rounded-3xl max-w-md w-full shadow-2xl relative">
+            <button onclick="closeProfileModal()" class="absolute top-4 right-4 text-slate-500 hover:text-white"><i class="ph-bold ph-x text-xl"></i></button>
+            
+            <div class="flex flex-col items-center mb-4">
+                <div class="relative group cursor-pointer mb-4" onclick="document.getElementById('avatar-upload').click()">
+                    <div class="w-20 h-20 rounded-full bg-slate-800 overflow-hidden border-2 border-red-500/50 relative shadow-[0_0_15px_rgba(220,38,38,0.2)] flex items-center justify-center">
+                        <i class="ph-bold ph-user text-3xl text-slate-500 absolute z-0"></i>
+                        <img id="modal-avatar" src="" class="w-full h-full object-cover hidden absolute inset-0 z-10" />
+                        <div class="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                            <i class="ph-bold ph-camera text-white"></i>
+                        </div>
+                    </div>
+                </div>
+                <input type="file" id="avatar-upload" class="hidden" accept="image/*" onchange="uploadAvatar(event)">
+                <h3 class="text-white text-lg font-bold">Analyst Profile</h3>
+                <p class="text-slate-400 text-[11px] mt-1 text-center">Customize profile parameters for tailored AI reasoning.</p>
+            </div>
+            
+            <div class="space-y-3">
+                <div>
+                    <label class="text-[9px] font-bold text-slate-500 tracking-widest uppercase mb-1 block">Full Name</label>
+                    <input type="text" id="profile-name" placeholder="E.g., John Doe" class="w-full bg-[#0a0a0a] border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm outline-none focus:border-red-500 transition-all">
+                </div>
+                
+                <div>
+                    <label class="text-[9px] font-bold text-slate-500 tracking-widest uppercase mb-1 block">Registered Contact (Read-Only)</label>
+                    <input type="text" id="profile-contact" readonly class="w-full bg-[#1a1a1a] border border-slate-800 rounded-xl px-4 py-2.5 text-slate-400 text-sm outline-none cursor-not-allowed">
+                </div>
+
+                <div class="flex gap-3">
+                    <div class="w-1/2">
+                        <label class="text-[9px] font-bold text-slate-500 tracking-widest uppercase mb-1 block">Gender</label>
+                        <select id="profile-gender" class="w-full bg-[#0a0a0a] border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm outline-none focus:border-red-500 transition-all appearance-none cursor-pointer">
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                            <option value="Prefer Not To Say" selected>Prefer Not to Say</option>
+                        </select>
+                    </div>
+                    <div class="w-1/2">
+                        <label class="text-[9px] font-bold text-slate-500 tracking-widest uppercase mb-1 block">Role</label>
+                        <select id="profile-role" class="w-full bg-[#0a0a0a] border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm outline-none focus:border-red-500 transition-all appearance-none cursor-pointer">
+                            <option value="Financial Analyst">Financial Analyst</option>
+                            <option value="Data Scientist">Data Scientist</option>
+                            <option value="Corporate Executive">Corporate Executive</option>
+                            <option value="Student/Academic">Student/Academic</option>
+                            <option value="Enthusiast" selected>Enthusiast</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="text-[9px] font-bold text-slate-500 tracking-widest uppercase mb-1 block">Primary Focus Area</label>
+                    <select id="profile-focus" class="w-full bg-[#0a0a0a] border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm outline-none focus:border-red-500 transition-all appearance-none cursor-pointer">
+                        <option value="Document Analysis & RAG" selected>Document Analysis & RAG</option>
+                        <option value="Equities & Market Research">Equities & Market Research</option>
+                        <option value="Wealth Management">Wealth Management</option>
+                        <option value="Quantitative Analysis">Quantitative Analysis</option>
+                    </select>
+                </div>
+            </div>
+            <button onclick="saveProfile()" class="w-full mt-5 bg-red-700 hover:bg-red-600 text-white font-bold py-3 rounded-xl transition-all shadow-[0_4px_15px_rgba(220,38,38,0.3)] text-sm">Save Settings</button>
+        </div>
+    </div>
+
+    <script>
+        const BACKEND_URL = "https://financevision-backend.onrender.com";
+
+        let token = localStorage.getItem("financevision_token");
+        let currentSessionId = null;
+        let sessionToDeleteId = null;
+        let currentUserProfile = {};
+        let unverifiedContact = "";
+        let timerInterval = null;
+        let starredTickers = JSON.parse(localStorage.getItem("fv_starred_tickers") || "[]");
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            let icon = 'ph-info';
+            let colorClass = 'border-slate-600 bg-[#111] text-white';
+            
+            if (type === 'success') {
+                icon = 'ph-check-circle';
+                colorClass = 'border-green-500/50 bg-green-950/40 text-green-100';
+            } else if (type === 'error') {
+                icon = 'ph-warning-circle';
+                colorClass = 'border-red-500/50 bg-red-950/40 text-red-100';
+            }
+
+            toast.className = `toast-enter flex items-center gap-3 p-4 rounded-xl border backdrop-blur-md shadow-2xl ${colorClass}`;
+            toast.innerHTML = `
+                <i class="ph-fill ${icon} text-2xl ${type === 'success' ? 'text-green-400' : type === 'error' ? 'text-red-400' : 'text-slate-400'}"></i>
+                <span class="font-medium text-sm">${message}</span>
+            `;
+            
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.remove('toast-enter');
+                toast.classList.add('toast-exit');
+                setTimeout(() => toast.remove(), 400);
+            }, 4000);
+        }
+
+        function toggleMobileSidebar() {
+            const sidebar = document.getElementById('sidebar-panel');
+            sidebar.classList.toggle('-translate-x-full');
+        }
+
+        function togglePassword() {
+            const pwdInput = document.getElementById('password');
+            const eyeIcon = document.getElementById('password-eye-icon');
+            if (pwdInput.type === 'password') {
+                pwdInput.type = 'text';
+                eyeIcon.classList.remove('ph-eye');
+                eyeIcon.classList.add('ph-eye-slash');
+            } else {
+                pwdInput.type = 'password';
+                eyeIcon.classList.remove('ph-eye-slash');
+                eyeIcon.classList.add('ph-eye');
+            }
+        }
+
+        function startOtpTimer() {
+            let seconds = 60;
+            const timerEl = document.getElementById('timer-sec');
+            const resendBtn = document.getElementById('resend-btn');
+            
+            resendBtn.disabled = true;
+            resendBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            resendBtn.classList.remove('hover:text-red-400');
+
+            if (timerInterval) clearInterval(timerInterval);
+            
+            timerInterval = setInterval(() => {
+                seconds--;
+                timerEl.innerText = seconds;
+                if (seconds <= 0) {
+                    clearInterval(timerInterval);
+                    resendBtn.disabled = false;
+                    resendBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    resendBtn.classList.add('hover:text-red-400');
+                }
+            }, 1000);
+        }
+
+        async function resendOTPCode() {
+            const resendBtn = document.getElementById('resend-btn');
+            resendBtn.innerText = "Deploying...";
+            try {
+                const res = await fetch(`${BACKEND_URL}/auth/resend-otp`, {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ contact_id: unverifiedContact })
+                });
+                if (res.ok) {
+                    showToast("Fresh 6-digit code deployed!", "success");
+                    startOtpTimer();
+                } else showToast("Failed to resend code.", "error");
+            } catch(e) {
+                showToast("Connection failed.", "error");
+            } finally {
+                resendBtn.innerText = "Resend Code";
+            }
+        }
+
+        if (token) {
+            document.getElementById('auth-screen').classList.add('hidden');
+            document.getElementById('app-screen').classList.remove('hidden');
+            loadProfile();
+            startMarketFeedWithRetry();
+            startGlobalTickerWithRetry();
+            
+            fetch(`${BACKEND_URL}/chat/sessions`, { headers: { "Authorization": `Bearer ${token}` } })
+            .then(r => r.json())
+            .then(sessions => {
+                if(sessions.length === 0) startNewChat();
+                else loadSessions(true);
+            }).catch(e => console.log(e));
+        }
+
+        const micBtn = document.getElementById('mic-btn');
+        const queryInput = document.getElementById('query-input');
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        
+        if (SpeechRecognition) {
+            const recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            
+            recognition.onstart = function() {
+                micBtn.classList.add('bg-red-600', 'text-white', 'animate-pulse');
+                micBtn.classList.remove('bg-slate-800/50', 'text-slate-400');
+                queryInput.placeholder = "Listening... Speak now.";
+                queryInput.value = ""; 
+            };
+            
+            recognition.onresult = function(event) {
+                queryInput.value = Array.from(event.results).map(r => r[0].transcript).join('');
+            };
+            
+            recognition.onerror = function() { resetMicUI(); };
+            recognition.onend = function() { resetMicUI(); };
+
+            function resetMicUI() {
+                micBtn.classList.remove('bg-red-600', 'text-white', 'animate-pulse');
+                micBtn.classList.add('bg-slate-800/50', 'text-slate-400');
+                if(!queryInput.value) queryInput.placeholder = "Query the FinanceVision engine...";
+            }
+
+            micBtn.onclick = () => { recognition.start(); };
+        } else {
+            micBtn.onclick = () => showToast("Voice recognition unavailable in this browser.", "error");
+        }
+
+        async function handleCredentialResponse(response) {
+            try {
+                const res = await fetch(`${BACKEND_URL}/auth/google`, {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ token: response.credential })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showToast("Google Authentication Successful. Accessing terminal...", "success");
+                    localStorage.setItem("financevision_token", data.access_token);
+                    setTimeout(() => location.reload(), 1200);
+                } else showToast(data.detail || "Google Login failed.", "error");
+            } catch(e) { showToast("Backend is waking up (~50s on free tier). Please wait.", "error"); }
+        }
+
+        async function login() {
+            const contact_id = document.getElementById('contact-id').value;
+            const password = document.getElementById('password').value;
+            const btn = document.getElementById('login-btn');
+            
+            if(!contact_id || !password) return showToast("Please enter credentials.", "error");
+            btn.innerHTML = `<i class="ph-bold ph-spinner animate-spin"></i> Authenticating...`;
+            
+            try {
+                const res = await fetch(`${BACKEND_URL}/auth/login`, {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ contact_id: contact_id, password: password })
+                });
+                const data = await res.json();
+                
+                if (res.ok) {
+                    showToast("Authentication Successful. Redirecting...", "success");
+                    localStorage.setItem("financevision_token", data.access_token);
+                    setTimeout(() => location.reload(), 1200); 
+                } else if (res.status === 403) {
+                    unverifiedContact = contact_id;
+                    document.getElementById('login-fields').classList.add('hidden');
+                    document.getElementById('otp-fields').classList.remove('hidden');
+                    document.getElementById('auth-subtitle').innerText = "Identity Verification Required";
+                    showToast("Account unverified. Code deployed.", "error");
+                    startOtpTimer();
+                } else {
+                    showToast(data.detail || "Login failed.", "error");
+                }
+            } catch(e) { 
+                showToast("Server waking up (~50s on free tier). Please try again.", "error"); 
+            } finally {
+                btn.innerHTML = `Authenticate (Login)`;
+            }
+        }
+
+        async function signup() {
+            const contact_id = document.getElementById('contact-id').value;
+            const password = document.getElementById('password').value;
+            const btn = document.getElementById('signup-btn');
+            
+            if(!contact_id || !password) return showToast("Please enter credentials.", "error");
+            btn.innerHTML = `<i class="ph-bold ph-spinner animate-spin"></i> Deploying Security Code...`;
+            
+            try {
+                const res = await fetch(`${BACKEND_URL}/auth/signup`, {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ contact_id: contact_id, password: password })
+                });
+                const data = await res.json();
+                
+                if (res.ok) {
+                    unverifiedContact = contact_id;
+                    document.getElementById('login-fields').classList.add('hidden');
+                    document.getElementById('otp-fields').classList.remove('hidden');
+                    document.getElementById('auth-subtitle').innerText = "Identity Verification Required";
+                    showToast("Security Code deployed!", "success");
+                    startOtpTimer();
+                } else { showToast(data.detail || "Signup failed", "error"); }
+            } catch(e) { 
+                showToast("Server waking up (~50s on free tier). Please try again.", "error"); 
+            } finally {
+                btn.innerHTML = `Create Clearance (Sign Up)`;
+            }
+        }
+
+        async function verifyOTP() {
+            const otp = document.getElementById('otp-input').value;
+            const btn = document.getElementById('verify-btn');
+            
+            if(otp.length !== 6) return showToast("Please enter 6-digit code.", "error");
+            btn.innerHTML = `<i class="ph-bold ph-spinner animate-spin"></i> Verifying...`;
+            
+            try {
+                const res = await fetch(`${BACKEND_URL}/auth/verify`, {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ contact_id: unverifiedContact, otp: otp })
+                });
+                const data = await res.json();
+                
+                if (res.ok) {
+                    showToast("Identity Verified! Accessing terminal...", "success");
+                    localStorage.setItem("financevision_token", data.access_token);
+                    setTimeout(() => location.reload(), 1200);
+                } else { showToast(data.detail || "Invalid Code.", "error"); }
+            } catch(e) { 
+                showToast("Connection failed.", "error"); 
+            } finally {
+                btn.innerHTML = `Verify Identity & Login`;
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem("financevision_token");
+            location.reload();
+        }
+
+        function toggleStarTicker(ticker) {
+            if (starredTickers.includes(ticker)) {
+                starredTickers = starredTickers.filter(t => t !== ticker);
+                showToast(`Removed ${ticker} from Watchlist`, 'info');
+            } else {
+                starredTickers.push(ticker);
+                showToast(`Added ${ticker} to Watchlist`, 'success');
+            }
+            localStorage.setItem("fv_starred_tickers", JSON.stringify(starredTickers));
+            startMarketFeedWithRetry();
+        }
+
+        async function startGlobalTickerWithRetry() {
+            let loaded = false;
+            while (!loaded) {
+                try {
+                    const res = await fetch(`${BACKEND_URL}/chat/indices`, { headers: { "Authorization": `Bearer ${token}` } });
+                    if(res.ok) {
+                        const data = await res.json();
+                        if (data && data.length > 0) {
+                            const tickerContainer = document.getElementById('global-ticker');
+                            let htmlContent = '';
+                            data.forEach(index => {
+                                const isPos = index.change >= 0;
+                                htmlContent += `
+                                    <div class="flex items-center gap-3 px-8 cursor-pointer hover:bg-white/5 h-full" onclick="document.getElementById('query-input').value = 'Draw chart for ${index.ticker}'; sendMessage();">
+                                        <span class="font-bold text-slate-200 text-[11px]">${index.name}</span>
+                                        <span class="text-white font-mono text-[11px] font-bold">${index.price}</span>
+                                        <span class="${isPos ? 'text-green-400' : 'text-red-400'} font-bold text-[10px] bg-${isPos?'green':'red'}-900/20 px-2 py-0.5 rounded border border-${isPos?'green':'red'}-500/30">${isPos?'+':''}${index.change}</span>
+                                    </div><div class="w-px h-4 bg-slate-700"></div>`;
+                            });
+                            tickerContainer.innerHTML = htmlContent.repeat(3);
+                            loaded = true;
+                            break;
+                        }
+                    }
+                } catch (e) {}
+                await new Promise(r => setTimeout(r, 4000));
+            }
+        }
+
+        async function startMarketFeedWithRetry() {
+            let loaded = false;
+            while (!loaded) {
+                try {
+                    const res = await fetch(`${BACKEND_URL}/chat/market`, { headers: { "Authorization": `Bearer ${token}` } });
+                    if(res.ok) {
+                        const data = await res.json();
+                        if (data && data.length > 0) {
+                            const sidebar = document.getElementById('live-markets-container');
+                            sidebar.innerHTML = '';
+                            data.forEach(asset => {
+                                const isPos = asset.change >= 0;
+                                const isStarred = starredTickers.includes(asset.ticker);
+                                sidebar.innerHTML += `
+                                    <div class="p-4 rounded-xl bg-[#111] border ${isStarred ? 'border-yellow-500/40' : 'border-slate-700'} hover:border-red-500/40 hover:bg-slate-800/50 shadow-md transition-all">
+                                        <div class="flex justify-between mb-2 items-start">
+                                            <div><h3 class="font-bold text-white text-[13px]">${asset.name}</h3><p class="text-[10px] text-slate-500 font-bold">${asset.ticker}</p></div>
+                                            <button onclick="event.stopPropagation(); toggleStarTicker('${asset.ticker}');" class="text-slate-500 hover:text-yellow-400">
+                                                <i class="ph-fill ph-star ${isStarred ? 'text-yellow-400' : 'text-slate-600'} text-base"></i>
+                                            </button>
+                                        </div>
+                                        <div class="flex items-baseline gap-2 mb-2 cursor-pointer" onclick="document.getElementById('query-input').value = 'Give me a detailed analysis of ${asset.ticker}'; sendMessage();">
+                                            <span class="text-xl font-bold text-white font-mono">${asset.price}</span>
+                                            <span class="text-[10px] font-bold ${isPos ? 'text-green-400' : 'text-red-400'}">${isPos?'+':''}${asset.change}</span>
+                                        </div>
+                                        <p class="text-[10px] text-slate-300 border-t border-slate-700/50 pt-2 mt-2 leading-relaxed">${asset.news}</p>
+                                    </div>`;
+                            });
+                            loaded = true;
+                            break;
+                        }
+                    }
+                } catch (e) {}
+                await new Promise(r => setTimeout(r, 4000));
+            }
+        }
+
+        async function loadSessions(autoLoadFirst = false) {
+            try {
+                const res = await fetch(`${BACKEND_URL}/chat/sessions`, { headers: { "Authorization": `Bearer ${token}` } });
+                if(res.status === 401) return logout();
+                const sessions = await res.json();
+                const list = document.getElementById('sessions-list');
+                list.innerHTML = "";
+                sessions.forEach(s => {
+                    const div = document.createElement('div');
+                    div.className = `p-3 rounded-xl text-[13px] flex items-center justify-between cursor-pointer group ${currentSessionId === s.id ? 'bg-red-900/20 text-red-400 border border-red-800/50' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200 border border-transparent'}`;
+                    div.innerHTML = `<span class="flex items-center gap-2 flex-1 truncate font-medium"><i class="ph-bold ph-chat-text"></i> ${s.title}</span>
+                                     <button class="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-red-400 p-1.5 hover:bg-red-950/50 rounded-md" onclick="event.stopPropagation(); confirmDelete(${s.id});"><i class="ph-bold ph-trash"></i></button>`;
+                    div.onclick = () => loadHistory(s.id);
+                    list.appendChild(div);
+                });
+                
+                if(autoLoadFirst && !currentSessionId && sessions.length > 0) {
+                    loadHistory(sessions[0].id);
+                }
+            } catch(e) {}
+        }
+
+        function confirmDelete(id) { sessionToDeleteId = id; document.getElementById('delete-modal').classList.remove('hidden'); }
+        function closeDeleteModal() { sessionToDeleteId = null; document.getElementById('delete-modal').classList.add('hidden'); }
+        async function confirmDeleteSession() {
+            if(!sessionToDeleteId) return;
+            try {
+                const res = await fetch(`${BACKEND_URL}/chat/sessions/${sessionToDeleteId}`, { method: "DELETE", headers: { "Authorization": `Bearer ${token}` } });
+                if (res.ok) {
+                    if (currentSessionId === sessionToDeleteId) { currentSessionId = null; document.getElementById('chat-box').innerHTML = ''; }
+                    loadSessions(false);
+                    showToast("Session deleted.", "success");
+                }
+            } catch(e) {} finally { closeDeleteModal(); }
+        }
+
+        function startNewChat() {
+            currentSessionId = null; 
+            document.getElementById('chat-box').innerHTML = '';
+            appendMessage("Bot", "Secure channel active. I am FinanceVision, your financial and RAG extraction assistant. How can I help you analyze data today?");
+        }
+
+        async function loadHistory(id) {
+            currentSessionId = id; 
+            loadSessions(false); 
+            const res = await fetch(`${BACKEND_URL}/chat/history/${id}`, { headers: { "Authorization": `Bearer ${token}` } });
+            const history = await res.json();
+            const chatBox = document.getElementById('chat-box');
+            chatBox.innerHTML = "";
+            history.forEach(msg => {
+                const timeStr = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                if (msg.sender === "User") appendMessage("User", msg.text, timeStr);
+                else {
+                    const div = appendMessage("Bot", "", timeStr);
+                    div.innerHTML = renderInteractiveWidgets(marked.parse(msg.text), div);
+                }
+            });
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function speakText(btnElement) {
+            if (!('speechSynthesis' in window)) return showToast("TTS unavailable in browser.", "error");
+            window.speechSynthesis.cancel();
+            if (btnElement.innerText.includes("Stop")) {
+                btnElement.innerHTML = `<i class="ph-fill ph-speaker-high text-sm"></i> Read Aloud`;
+                btnElement.classList.remove('text-red-400');
+                return;
+            }
+            document.querySelectorAll('.read-aloud-btn').forEach(btn => {
+                btn.innerHTML = `<i class="ph-fill ph-speaker-high text-sm"></i> Read Aloud`;
+                btn.classList.remove('text-red-400');
+            });
+            const contentContainer = btnElement.parentElement.querySelector('.ai-content');
+            if (!contentContainer) return;
+            const rawText = contentContainer.innerText;
+            const cleanText = rawText.replace(/\[.*?\]/g, '').replace(/<[^>]*>?/gm, ' ').replace(/[\*\_]/g, '').trim(); 
+            if (!cleanText) return;
+
+            const utterance = new SpeechSynthesisUtterance(cleanText);
+            utterance.rate = 1.0;
+            utterance.onstart = () => {
+                btnElement.innerHTML = `<i class="ph-fill ph-stop text-sm"></i> Stop Reading`;
+                btnElement.classList.add('text-red-400');
+            };
+            utterance.onend = () => {
+                btnElement.innerHTML = `<i class="ph-fill ph-speaker-high text-sm"></i> Read Aloud`;
+                btnElement.classList.remove('text-red-400');
+            };
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function appendMessage(sender, text, timeStr) {
+            if (!timeStr) timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const chatBox = document.getElementById('chat-box');
+            const div = document.createElement('div');
+            
+            if (sender === "User") {
+                const avatarHtml = currentUserProfile.profile_picture ? `<img src="${BACKEND_URL}${currentUserProfile.profile_picture}" class="w-full h-full object-cover rounded-full z-10 absolute inset-0" />` : ``;
+                div.className = "flex flex-row-reverse gap-4 items-start mb-6";
+                div.innerHTML = `
+                    <div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center shrink-0 border border-slate-700 relative overflow-hidden mt-1">
+                        <i class="ph-bold ph-user text-slate-300 text-lg z-0 absolute"></i>${avatarHtml}
+                    </div>
+                    <div class="max-w-[85%] flex flex-col items-end">
+                        <div class="flex items-center gap-2 mb-1.5 px-1">
+                            <span class="text-[10px] text-slate-500 font-medium">${timeStr}</span>
+                            <span class="text-xs font-bold text-slate-300">${currentUserProfile.full_name || 'You'}</span>
+                        </div>
+                        <div class="bg-red-800 text-white px-5 py-3.5 rounded-2xl rounded-tr-sm text-[14px] font-medium leading-relaxed shadow-lg">${text}</div>
+                    </div>`;
+            } else {
+                div.className = "flex gap-4 items-start mb-6 w-full";
+                div.innerHTML = `
+                    <div class="w-10 h-10 rounded-xl bg-red-900/20 border border-red-500/30 flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(220,38,38,0.15)] relative mt-1">
+                        <i class="ph-fill ph-briefcase text-red-500 text-xl"></i>
+                    </div>
+                    <div class="flex-1 max-w-[88%]">
+                        <div class="flex items-center gap-2 mb-1.5 px-1">
+                            <span class="text-xs font-bold text-slate-300">FinanceVision</span>
+                            <span class="text-[10px] text-slate-500 font-medium">${timeStr}</span>
+                        </div>
+                        <div class="text-slate-200 text-[14px] leading-relaxed ai-content bg-[#111] border border-slate-800 p-6 rounded-2xl rounded-tl-sm shadow-md w-full">${text}</div>
+                        <button onclick="speakText(this)" class="read-aloud-btn mt-2.5 text-slate-400 hover:text-red-400 flex items-center gap-1.5 text-[10px] uppercase font-bold tracking-widest transition-colors py-1 px-2 rounded-lg hover:bg-slate-800">
+                            <i class="ph-fill ph-speaker-high text-sm"></i> Read Aloud
+                        </button>
+                    </div>`;
+            }
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+            return div.querySelector('.ai-content');
+        }
+
+        function renderInteractiveWidgets(text, containerDiv) {
+            let processedText = text;
+
+            // COMPARISON BAR GRAPH WIDGET
+            const compareRegex = /\[COMPARE_CHART\|([^\|]+)\|(.+)\]/gi;
+            let compareMatch;
+            while ((compareMatch = compareRegex.exec(processedText)) !== null) {
+                const title = compareMatch[1];
+                const dataStr = compareMatch[2]; 
+                const pairs = dataStr.split('|').map(s => s.split(':'));
+                const labels = pairs.map(p => p[0].trim());
+                const dataValues = pairs.map(p => parseFloat((p[1] || '0').replace(/[^0-9\.]/g, '')));
+                const chartId = `compare-${Math.random().toString(36).substr(2, 9)}`;
+
+                const widgetHtml = `<div class="mt-6 mb-4 p-5 rounded-2xl border border-slate-700 bg-[#0a0a0a] w-full max-w-4xl shadow-xl">
+                    <div class="mb-4">
+                        <p class="text-[9px] font-bold text-slate-500 tracking-widest uppercase mb-1">COMPARISON CHART</p>
+                        <h3 class="text-white font-black text-xl tracking-tight">${title}</h3>
+                    </div>
+                    <div class="relative h-56 w-full"><canvas id="${chartId}"></canvas></div>
+                </div>`;
+
+                processedText = processedText.replace(compareMatch[0], widgetHtml);
+                
+                setTimeout(() => {
+                    const ctx = document.getElementById(chartId).getContext('2d');
+                    new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                data: dataValues,
+                                backgroundColor: ['#ef4444', '#fca5a5', '#fbbf24', '#f87171', '#38bdf8', '#4ade80'],
+                                borderRadius: 4,
+                                barPercentage: 0.6
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { 
+                                legend: { display: false },
+                                tooltip: {
+                                    backgroundColor: '#111',
+                                    titleColor: '#94a3b8',
+                                    bodyColor: '#fff',
+                                    borderWidth: 1,
+                                    borderColor: '#ef4444',
+                                    callbacks: {
+                                        label: function(context) {
+                                            return ` Value: ${context.parsed.y.toLocaleString()}`;
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, border: { display: false }, ticks: { color: '#64748b', font: {size: 10} } },
+                                x: { grid: { display: false }, border: { display: false }, ticks: { color: '#cbd5e1', font: {size: 11, weight: 'bold'} } }
+                            }
+                        }
+                    });
+                }, 100);
+            }
+
+            // TIME SERIES CHART WIDGET
+            const chartRegex = /\[INTERACTIVE_CHART\|(?:Ticker\|)?([A-Z0-9\.\^\-]+)(?:\|(bar|line))?\]/i;
+            const match = chartRegex.exec(processedText);
+            if (match) {
+                const ticker = match[1].toUpperCase(); 
+                const chartType = match[2] ? match[2].toLowerCase() : 'line';
+                const chartId = `chart-${Math.random().toString(36).substr(2, 9)}`;
+                const widgetHtml = `<div class="mt-6 mb-4 p-5 rounded-2xl border border-slate-700 bg-[#0a0a0a] w-full max-w-4xl shadow-xl"><div class="flex justify-between items-end mb-4"><div><p class="text-[9px] font-bold text-slate-500 tracking-widest uppercase mb-1">ASSET TICKER (TIME SERIES)</p><h3 class="text-white font-black text-xl tracking-tight">${ticker}</h3></div><div class="flex gap-1 bg-[#111] p-1 rounded-lg border border-slate-700">${['1d', '5d', '1mo', '6mo', '1y', '5y', 'max'].map(period => `<button onclick="fetchAndDrawChart('${ticker}', '${period}', '${chartId}', '${chartType}')" class="px-2.5 py-1 text-[9px] font-bold rounded-md hover:bg-slate-700 transition-all ${period === '1mo' ? 'bg-red-700 text-white' : 'text-slate-400'} uppercase tracking-wider">${period}</button>`).join('')}</div></div><div class="relative h-56 w-full"><canvas id="${chartId}"></canvas></div></div>`;
+                processedText = processedText.replace(match[0], widgetHtml);
+                processedText = processedText.replace(/\[INTERACTIVE_CHART\|.*?\]/gi, ''); 
+                setTimeout(() => fetchAndDrawChart(ticker, '1mo', chartId, chartType), 100);
+            }
+            return processedText;
+        }
+            
+        async function fetchAndDrawChart(ticker, period, canvasId, chartType = 'line') {
+            try {
+                const res = await fetch(`${BACKEND_URL}/chat/chart_data/${ticker}?period=${period}`, { headers: { "Authorization": `Bearer ${token}` } });
+                const data = await res.json();
+                const ctx = document.getElementById(canvasId).getContext('2d');
+                if (window[`chart_instance_${canvasId}`]) window[`chart_instance_${canvasId}`].destroy();
+                if(!data.prices || data.prices.length === 0) {
+                    ctx.font = "500 12px Inter"; ctx.fillStyle = "#64748b"; ctx.textAlign = "center";
+                    ctx.fillText("Market data unavailable.", ctx.canvas.width/2, ctx.canvas.height/2); return;
+                }
+                const isPos = data.prices[data.prices.length-1] >= data.prices[0];
+                const lineColor = isPos ? '#22c55e' : '#ef4444';
+                const fillColor = isPos ? (chartType === 'bar' ? '#22c55e' : 'rgba(34, 197, 94, 0.05)') : (chartType === 'bar' ? '#ef4444' : 'rgba(239, 68, 68, 0.05)');
+                
+                const buttons = document.getElementById(canvasId).parentElement.previousElementSibling.querySelectorAll('button');
+                buttons.forEach(btn => {
+                    btn.onclick = () => fetchAndDrawChart(ticker, btn.innerText.toLowerCase(), canvasId, chartType);
+                    btn.className = `px-2.5 py-1 text-[9px] font-bold rounded-md transition-all uppercase tracking-wider ${btn.innerText.toLowerCase() === period.toLowerCase() ? 'bg-red-700 text-white' : 'hover:bg-slate-700 text-slate-400'}`;
+                });
+
+                window[`chart_instance_${canvasId}`] = new Chart(ctx, {
+                    type: chartType,
+                    data: { labels: data.labels, datasets: [{ data: data.prices, borderColor: lineColor, backgroundColor: fillColor, borderWidth: chartType === 'bar' ? 0 : 2, pointRadius: 0, pointHitRadius: 15, fill: true, tension: 0.1 }] },
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false, 
+                        interaction: { mode: 'index', intersect: false }, 
+                        plugins: { 
+                            legend: { display: false }, 
+                            tooltip: { 
+                                backgroundColor: '#111', 
+                                titleColor: '#94a3b8', 
+                                bodyColor: '#fff', 
+                                borderColor: lineColor, 
+                                borderWidth: 1,
+                                callbacks: {
+                                    label: function(context) {
+                                        return ` Price: ${context.parsed.y.toLocaleString()}`;
+                                    }
+                                }
+                            } 
+                        }, 
+                        scales: { x: { display: false }, y: { display: true, position: 'left', grid: { color: 'rgba(255,255,255,0.05)' }, border: { display: false }, ticks: { color: '#64748b', font: {size: 10} } } } 
+                    }
+                });
+            } catch (e) {}
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('query-input');
+            const query = input.value.trim();
+            if (!query) return;
+
+            input.value = '';
+            appendMessage("User", query);
+            const contentDiv = appendMessage("Bot", `<i class="ph-bold ph-spinner animate-spin text-lg text-red-500 inline-block align-middle"></i> <span class="text-slate-400 ml-2 animate-pulse font-medium text-sm">Processing query...</span>`);
+            
+            try {
+                const res = await fetch(`${BACKEND_URL}/chat/stream`, {
+                    method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+                    body: JSON.stringify({ query, session_id: currentSessionId })
+                });
+                if (res.status === 401) logout();
+                
+                const newSessionId = res.headers.get("X-Session-ID");
+                if (newSessionId && !currentSessionId) { currentSessionId = parseInt(newSessionId); loadSessions(false); }
+
+                const reader = res.body.getReader();
+                const decoder = new TextDecoder();
+                let fullText = "";
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    fullText += decoder.decode(value);
+                    contentDiv.innerHTML = marked.parse(fullText);
+                    document.getElementById('chat-box').scrollTop = document.getElementById('chat-box').scrollHeight;
+                }
+
+                contentDiv.innerHTML = renderInteractiveWidgets(marked.parse(fullText), contentDiv);
+                loadSessions(false); 
+            } catch (e) { contentDiv.innerHTML = `<span class="text-red-400 font-bold text-sm">Connection Terminated</span>`; }
+        }
+
+        async function loadProfile() {
+            try {
+                const res = await fetch(`${BACKEND_URL}/chat/profile`, { headers: { "Authorization": `Bearer ${token}` } });
+                if (res.ok) { currentUserProfile = await res.json(); updateProfileUI(); }
+            } catch (e) {}
+        }
+        function updateProfileUI() {
+            document.getElementById('sidebar-name').innerText = currentUserProfile.full_name || "Set Up Profile";
+            document.getElementById('sidebar-role').innerText = currentUserProfile.professional_role || "Configure AI";
+            if (currentUserProfile.profile_picture) {
+                const imgUrl = `${BACKEND_URL}${currentUserProfile.profile_picture}?t=${new Date().getTime()}`;
+                const sidebarImg = document.getElementById('sidebar-avatar');
+                const modalImg = document.getElementById('modal-avatar');
+                sidebarImg.src = imgUrl; sidebarImg.classList.remove('hidden');
+                modalImg.src = imgUrl; modalImg.classList.remove('hidden');
+            }
+            document.getElementById('profile-name').value = currentUserProfile.full_name || "";
+            document.getElementById('profile-contact').value = currentUserProfile.contact_id || "Unregistered";
+            document.getElementById('profile-gender').value = currentUserProfile.gender || "Prefer Not To Say";
+            document.getElementById('profile-role').value = currentUserProfile.professional_role || "Enthusiast";
+            document.getElementById('profile-focus').value = currentUserProfile.focus_area || "Document Analysis & RAG";
+        }
+        function openProfileModal() { document.getElementById('profile-modal').classList.remove('hidden'); }
+        function closeProfileModal() { document.getElementById('profile-modal').classList.add('hidden'); }
+        async function saveProfile() {
+            const full_name = document.getElementById('profile-name').value;
+            const gender = document.getElementById('profile-gender').value;
+            const professional_role = document.getElementById('profile-role').value;
+            const focus_area = document.getElementById('profile-focus').value;
+            try {
+                const res = await fetch(`${BACKEND_URL}/chat/profile`, {
+                    method: "PUT", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+                    body: JSON.stringify({ full_name, gender, professional_role, focus_area })
+                });
+                if (res.ok) {
+                    currentUserProfile = { ...currentUserProfile, full_name, gender, professional_role, focus_area };
+                    updateProfileUI(); closeProfileModal();
+                    showToast("Profile Settings Saved Successfully", "success");
+                }
+            } catch (e) { showToast("Failed to save profile.", "error"); }
+        }
+        async function uploadAvatar(event) {
+            const file = event.target.files[0]; if (!file) return;
+            const formData = new FormData(); formData.append("file", file);
+            try {
+                document.getElementById('modal-avatar').style.opacity = '0.5';
+                const res = await fetch(`${BACKEND_URL}/chat/profile/picture`, { method: "POST", headers: { "Authorization": `Bearer ${token}` }, body: formData });
+                if (res.ok) {
+                    const data = await res.json();
+                    currentUserProfile.profile_picture = data.profile_picture;
+                    updateProfileUI(); document.getElementById('modal-avatar').style.opacity = '1';
+                    showToast("Profile picture updated.", "success");
+                }
+            } catch (e) { document.getElementById('modal-avatar').style.opacity = '1'; }
+        }
+        async function uploadDocument(event) {
+            const file = event.target.files[0]; if (!file) return;
+            document.getElementById('upload-status-text').innerText = "Uploading...";
+            const formData = new FormData(); formData.append("file", file);
+            try {
+                const res = await fetch(`${BACKEND_URL}/chat/upload`, { method: "POST", headers: { "Authorization": `Bearer ${token}` }, body: formData });
+                const data = await res.json();
+                document.getElementById('upload-status-text').innerText = "Upload File";
+                showToast("File uploaded to Knowledge Base.", "success");
+                appendMessage("Bot", data.message || "File uploaded successfully.");
+            } catch (e) { 
+                document.getElementById('upload-status-text').innerText = "Upload Failed"; 
+                showToast("Document upload failed.", "error");
+            }
+        }
+
+        async function exportReport() {
+            if (!currentSessionId) return showToast("No active session to export.", "error");
+            try {
+                const res = await fetch(`${BACKEND_URL}/chat/history/${currentSessionId}`, { headers: { "Authorization": `Bearer ${token}` } });
+                if (!res.ok) throw new Error("Failed to fetch history");
+                const history = await res.json();
+                if (history.length === 0) return showToast("This chat session is empty.", "error");
+
+                let reportContent = `# FinanceVision - Executive Intelligence Report\n`;
+                reportContent += `**Generated on:** ${new Date().toLocaleString()}\n`;
+                reportContent += `**Analyst:** ${currentUserProfile.full_name || 'Authorized User'} (${currentUserProfile.professional_role || 'Unspecified Role'})\n`;
+                reportContent += `===========================================================\n\n`;
+
+                history.forEach(msg => {
+                    const role = msg.sender === "User" ? "USER QUERY" : "FINANCEVISION ANALYSIS";
+                    const timestamp = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    reportContent += `### [${role} | ${timestamp}]\n`;
+                    reportContent += `${msg.text}\n\n`;
+                    reportContent += `---\n\n`;
+                });
+
+                const blob = new Blob([reportContent], { type: 'text/markdown' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `FinanceVision_Report_${new Date().toISOString().split('T')[0]}.md`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showToast("Report exported successfully!", "success");
+            } catch (e) { showToast("Failed to compile report.", "error"); }
+        }
+    </script>
+</body>
+</html>

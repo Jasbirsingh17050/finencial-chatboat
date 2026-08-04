@@ -1,0 +1,15 @@
+fastapi
+uvicorn
+sqlalchemy
+passlib
+bcrypt
+pyjwt
+python-dotenv
+yfinance
+chromadb
+pandas
+pymupdf
+google-generativeai
+requests
+ollama
+python-multipart
