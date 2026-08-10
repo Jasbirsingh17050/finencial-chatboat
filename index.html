@@ -16,14 +16,11 @@
         .marquee-content { display: flex; animation: scroll-left 40s linear infinite; min-width: 200%; }
         .marquee-content:hover { animation-play-state: paused; }
         @keyframes scroll-left { 0% { transform: translateX(50vw); } 100% { transform: translateX(-100%); } }
-        .ticker-wrap { overflow: hidden; height: 100%; position: relative; }
-        .ticker-move { animation: ticker-vertical 40s linear infinite; }
-        .ticker-move:hover { animation-play-state: paused; }
-        @keyframes ticker-vertical { 0% { transform: translateY(0); } 100% { transform: translateY(-50%); } }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(220, 38, 38, 0.3); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(220, 38, 38, 0.6); }
+        
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(220, 38, 38, 0.3); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(220, 38, 38, 0.6); }
 
         .ai-content h1, .ai-content h2, .ai-content h3 { color: #ffffff; font-weight: bold; margin-top: 1.25rem; margin-bottom: 0.5rem; letter-spacing: -0.025em; }
         .ai-content h3 { font-size: 1.1rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.25rem; }
@@ -45,7 +42,6 @@
         .toast-enter { animation: slideInRight 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
         .toast-exit { animation: fadeOut 0.4s forwards; }
 
-        /* DYNAMIC CURSOR GLOW EFFECT */
         #glow-pointer {
             position: fixed;
             top: 0;
@@ -53,16 +49,15 @@
             width: 100vw;
             height: 100vh;
             pointer-events: none;
-            background: radial-gradient(circle 600px at var(--x, 50vw) var(--y, 50vh), rgba(220, 38, 38, 0.05), transparent 80%);
+            background: radial-gradient(circle 450px at var(--x, 50vw) var(--y, 50vh), rgba(220, 38, 38, 0.12), transparent 80%);
             z-index: 9999;
+            transition: background 0.1s ease;
         }
     </style>
 </head>
 <body class="h-screen w-screen overflow-hidden flex flex-col">
 
-    <!-- THE GLOWING CURSOR ELEMENT -->
     <div id="glow-pointer"></div>
-
     <div id="toast-container" class="fixed top-6 right-6 z-[9999] flex flex-col gap-3 pointer-events-none"></div>
 
     <div id="auth-screen" class="fixed inset-0 z-50 flex font-sans bg-[#0a0a0a] text-white">
@@ -223,7 +218,6 @@
                 </div>
             </div>
 
-            <!-- CHAT AREA (EXPANDED BY SHRINKING RIGHT SIDEBAR) -->
             <div class="flex-1 flex flex-col h-full bg-[#050505] relative min-w-0">
                 <div class="h-14 border-b border-slate-800/50 flex items-center justify-between px-6 shrink-0 bg-[#0a0a0a]/80 backdrop-blur-md z-10">
                     <div class="flex items-center gap-2">
@@ -232,7 +226,7 @@
                     </div>
                 </div>
 
-                <div id="chat-box" class="flex-1 overflow-y-auto p-4 md:p-8 space-y-8 scroll-smooth pb-32"></div>
+                <div id="chat-box" class="flex-1 overflow-y-auto p-4 md:p-8 space-y-8 scroll-smooth pb-32 custom-scrollbar"></div>
 
                 <div class="absolute bottom-0 left-0 w-full p-4 md:p-8 bg-gradient-to-t from-[#050505] via-[#050505] to-transparent">
                     <div class="bg-[#111] border border-slate-700 p-2 rounded-2xl flex items-center gap-3 max-w-4xl mx-auto shadow-2xl relative z-20 hover:border-red-500/30 transition-colors">
@@ -247,16 +241,16 @@
                 </div>
             </div>
 
-            <!-- SHRINKED RIGHT SIDEBAR -->
-            <div class="hidden xl:flex w-64 border-l border-slate-800 bg-[#0a0a0a] flex-col h-full z-10 shrink-0">
-                <div class="p-6 border-b border-slate-800 shrink-0 bg-[#0a0a0a]">
-                    <h2 class="font-bold text-white flex items-center gap-2 text-lg">
+            <div class="hidden xl:flex w-60 border-l border-slate-800 bg-[#0a0a0a] flex-col h-full z-10 shrink-0">
+                <div class="p-5 border-b border-slate-800 shrink-0 bg-[#0a0a0a]">
+                    <h2 class="font-bold text-white flex items-center gap-2 text-base">
                         <i class="ph-bold ph-trend-up text-red-500"></i> Live Markets
                     </h2>
-                    <p class="text-[11px] text-slate-400 mt-1 font-medium">Real-time indices and watchlists.</p>
+                    <p class="text-[10px] text-slate-400 mt-1 font-medium">Real-time indices and watchlists.</p>
                 </div>
-                <div class="flex-1 ticker-wrap p-4">
-                    <div id="live-markets-container" class="ticker-move flex flex-col gap-4"></div>
+                <!-- Removed ticker-move class to stop animation and allow easy clicking -->
+                <div class="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                    <div id="live-markets-container" class="flex flex-col gap-4"></div>
                 </div>
             </div>
         </div>
@@ -653,20 +647,20 @@
                             data.forEach(asset => {
                                 const isPos = asset.change >= 0;
                                 const isStarred = starredTickers.includes(asset.ticker);
-                                // ADDED ONCLICK TO ENTIRE CARD HERE
+                                // The click event is explicitly attached to the entire card
                                 sidebar.innerHTML += `
-                                    <div onclick="document.getElementById('query-input').value = 'Give me a detailed analysis of ${asset.ticker}'; sendMessage();" class="p-4 rounded-xl bg-[#111] border ${isStarred ? 'border-yellow-500/40' : 'border-slate-700'} hover:border-red-500/40 hover:bg-slate-800/50 shadow-md transition-all cursor-pointer">
+                                    <div onclick="document.getElementById('query-input').value = 'Give me a detailed analysis of ${asset.ticker}'; sendMessage();" class="p-4 rounded-xl bg-[#111] border ${isStarred ? 'border-yellow-500/40' : 'border-slate-700'} hover:border-red-500/40 hover:bg-slate-800/50 shadow-md transition-all cursor-pointer relative z-20">
                                         <div class="flex justify-between mb-2 items-start">
-                                            <div><h3 class="font-bold text-white text-[13px]">${asset.name}</h3><p class="text-[10px] text-slate-500 font-bold">${asset.ticker}</p></div>
-                                            <button onclick="event.stopPropagation(); toggleStarTicker('${asset.ticker}');" class="text-slate-500 hover:text-yellow-400 relative z-10">
+                                            <div><h3 class="font-bold text-white text-[13px] pointer-events-none">${asset.name}</h3><p class="text-[10px] text-slate-500 font-bold pointer-events-none">${asset.ticker}</p></div>
+                                            <button onclick="event.stopPropagation(); toggleStarTicker('${asset.ticker}');" class="text-slate-500 hover:text-yellow-400 relative z-30">
                                                 <i class="ph-fill ph-star ${isStarred ? 'text-yellow-400' : 'text-slate-600'} text-base"></i>
                                             </button>
                                         </div>
-                                        <div class="flex items-baseline gap-2 mb-2">
+                                        <div class="flex items-baseline gap-2 mb-2 pointer-events-none">
                                             <span class="text-xl font-bold text-white font-mono">${asset.price}</span>
                                             <span class="text-[10px] font-bold ${isPos ? 'text-green-400' : 'text-red-400'}">${isPos?'+':''}${asset.change}</span>
                                         </div>
-                                        <p class="text-[10px] text-slate-300 border-t border-slate-700/50 pt-2 mt-2 leading-relaxed">${asset.news}</p>
+                                        <p class="text-[10px] text-slate-300 border-t border-slate-700/50 pt-2 mt-2 leading-relaxed pointer-events-none">${asset.news}</p>
                                     </div>`;
                             });
                             loaded = true;
@@ -717,7 +711,7 @@
         function startNewChat() {
             currentSessionId = null; 
             document.getElementById('chat-box').innerHTML = '';
-            appendMessage("Bot", "Secure channel active. I am FinanceVision, your financial and RAG extraction assistant. How can I help you analyze data today?");
+            appendMessage("Bot", "Secure channel active. I am FinanceVision, your financial and corporate intelligence assistant. How can I help you analyze the market today?");
         }
 
         async function loadHistory(id) {
@@ -778,10 +772,10 @@
                 const avatarHtml = currentUserProfile.profile_picture ? `<img src="${BACKEND_URL}${currentUserProfile.profile_picture}" class="w-full h-full object-cover rounded-full z-10 absolute inset-0" />` : ``;
                 div.className = "flex flex-row-reverse gap-4 items-start mb-6";
                 div.innerHTML = `
-                    <div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center shrink-0 border border-slate-700 relative overflow-hidden mt-1">
+                    <div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center shrink-0 border border-slate-700 relative overflow-hidden mt-1 z-10">
                         <i class="ph-bold ph-user text-slate-300 text-lg z-0 absolute"></i>${avatarHtml}
                     </div>
-                    <div class="max-w-[85%] flex flex-col items-end">
+                    <div class="max-w-[85%] flex flex-col items-end z-10">
                         <div class="flex items-center gap-2 mb-1.5 px-1">
                             <span class="text-[10px] text-slate-500 font-medium">${timeStr}</span>
                             <span class="text-xs font-bold text-slate-300">${currentUserProfile.full_name || 'You'}</span>
@@ -791,10 +785,10 @@
             } else {
                 div.className = "flex gap-4 items-start mb-6 w-full";
                 div.innerHTML = `
-                    <div class="w-10 h-10 rounded-xl bg-red-900/20 border border-red-500/30 flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(220,38,38,0.15)] relative mt-1">
+                    <div class="w-10 h-10 rounded-xl bg-red-900/20 border border-red-500/30 flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(220,38,38,0.15)] relative mt-1 z-10">
                         <i class="ph-fill ph-briefcase text-red-500 text-xl"></i>
                     </div>
-                    <div class="flex-1 max-w-[88%]">
+                    <div class="flex-1 max-w-[88%] z-10">
                         <div class="flex items-center gap-2 mb-1.5 px-1">
                             <span class="text-xs font-bold text-slate-300">FinanceVision</span>
                             <span class="text-[10px] text-slate-500 font-medium">${timeStr}</span>
@@ -813,7 +807,7 @@
         function renderInteractiveWidgets(text, containerDiv) {
             let processedText = text;
 
-            // COMPARISON BAR GRAPH WIDGET
+            // COMPARISON BAR GRAPH WIDGET (Strictly for comparisons)
             const compareRegex = /\[COMPARE_CHART\|([^\|]+)\|(.+)\]/gi;
             let compareMatch;
             while ((compareMatch = compareRegex.exec(processedText)) !== null) {
@@ -842,7 +836,7 @@
                             labels: labels,
                             datasets: [{
                                 data: dataValues,
-                                backgroundColor: ['#ef4444', '#fca5a5', '#fbbf24', '#f87171', '#38bdf8', '#4ade80'],
+                                backgroundColor: ['#ef4444', '#38bdf8', '#4ade80', '#fbbf24', '#f87171', '#fca5a5'],
                                 borderRadius: 4,
                                 barPercentage: 0.6
                             }]
@@ -874,7 +868,7 @@
                 }, 100);
             }
 
-            // TIME SERIES CHART WIDGET
+            // TIME SERIES CHART WIDGET (Strictly for single trends)
             const chartRegex = /\[INTERACTIVE_CHART\|(?:Ticker\|)?([A-Z0-9\.\^\-\=]+)(?:\|(bar|line))?\]/i;
             const match = chartRegex.exec(processedText);
             if (match) {
