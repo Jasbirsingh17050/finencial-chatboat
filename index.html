@@ -44,9 +44,24 @@
         }
         .toast-enter { animation: slideInRight 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
         .toast-exit { animation: fadeOut 0.4s forwards; }
+
+        /* DYNAMIC CURSOR GLOW EFFECT */
+        #glow-pointer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            background: radial-gradient(circle 600px at var(--x, 50vw) var(--y, 50vh), rgba(220, 38, 38, 0.05), transparent 80%);
+            z-index: 9999;
+        }
     </style>
 </head>
 <body class="h-screen w-screen overflow-hidden flex flex-col">
+
+    <!-- THE GLOWING CURSOR ELEMENT -->
+    <div id="glow-pointer"></div>
 
     <div id="toast-container" class="fixed top-6 right-6 z-[9999] flex flex-col gap-3 pointer-events-none"></div>
 
@@ -208,6 +223,7 @@
                 </div>
             </div>
 
+            <!-- CHAT AREA (EXPANDED BY SHRINKING RIGHT SIDEBAR) -->
             <div class="flex-1 flex flex-col h-full bg-[#050505] relative min-w-0">
                 <div class="h-14 border-b border-slate-800/50 flex items-center justify-between px-6 shrink-0 bg-[#0a0a0a]/80 backdrop-blur-md z-10">
                     <div class="flex items-center gap-2">
@@ -219,7 +235,7 @@
                 <div id="chat-box" class="flex-1 overflow-y-auto p-4 md:p-8 space-y-8 scroll-smooth pb-32"></div>
 
                 <div class="absolute bottom-0 left-0 w-full p-4 md:p-8 bg-gradient-to-t from-[#050505] via-[#050505] to-transparent">
-                    <div class="bg-[#111] border border-slate-700 p-2 rounded-2xl flex items-center gap-3 max-w-4xl mx-auto shadow-2xl relative z-20">
+                    <div class="bg-[#111] border border-slate-700 p-2 rounded-2xl flex items-center gap-3 max-w-4xl mx-auto shadow-2xl relative z-20 hover:border-red-500/30 transition-colors">
                         <button id="mic-btn" class="w-12 h-12 rounded-xl bg-slate-800/50 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-red-400 transition-all shrink-0">
                             <i class="ph-fill ph-microphone text-2xl"></i>
                         </button>
@@ -231,7 +247,8 @@
                 </div>
             </div>
 
-            <div class="hidden xl:flex w-80 border-l border-slate-800 bg-[#0a0a0a] flex-col h-full z-10 shrink-0">
+            <!-- SHRINKED RIGHT SIDEBAR -->
+            <div class="hidden xl:flex w-64 border-l border-slate-800 bg-[#0a0a0a] flex-col h-full z-10 shrink-0">
                 <div class="p-6 border-b border-slate-800 shrink-0 bg-[#0a0a0a]">
                     <h2 class="font-bold text-white flex items-center gap-2 text-lg">
                         <i class="ph-bold ph-trend-up text-red-500"></i> Live Markets
@@ -312,6 +329,15 @@
     </div>
 
     <script>
+        // DYNAMIC CURSOR GLOW SCRIPT
+        document.addEventListener('mousemove', (e) => {
+            const glow = document.getElementById('glow-pointer');
+            if(glow) {
+                glow.style.setProperty('--x', `${e.clientX}px`);
+                glow.style.setProperty('--y', `${e.clientY}px`);
+            }
+        });
+
         const BACKEND_URL = "https://financevision-backend.onrender.com";
 
         let token = localStorage.getItem("financevision_token");
@@ -627,15 +653,16 @@
                             data.forEach(asset => {
                                 const isPos = asset.change >= 0;
                                 const isStarred = starredTickers.includes(asset.ticker);
+                                // ADDED ONCLICK TO ENTIRE CARD HERE
                                 sidebar.innerHTML += `
-                                    <div class="p-4 rounded-xl bg-[#111] border ${isStarred ? 'border-yellow-500/40' : 'border-slate-700'} hover:border-red-500/40 hover:bg-slate-800/50 shadow-md transition-all">
+                                    <div onclick="document.getElementById('query-input').value = 'Give me a detailed analysis of ${asset.ticker}'; sendMessage();" class="p-4 rounded-xl bg-[#111] border ${isStarred ? 'border-yellow-500/40' : 'border-slate-700'} hover:border-red-500/40 hover:bg-slate-800/50 shadow-md transition-all cursor-pointer">
                                         <div class="flex justify-between mb-2 items-start">
                                             <div><h3 class="font-bold text-white text-[13px]">${asset.name}</h3><p class="text-[10px] text-slate-500 font-bold">${asset.ticker}</p></div>
-                                            <button onclick="event.stopPropagation(); toggleStarTicker('${asset.ticker}');" class="text-slate-500 hover:text-yellow-400">
+                                            <button onclick="event.stopPropagation(); toggleStarTicker('${asset.ticker}');" class="text-slate-500 hover:text-yellow-400 relative z-10">
                                                 <i class="ph-fill ph-star ${isStarred ? 'text-yellow-400' : 'text-slate-600'} text-base"></i>
                                             </button>
                                         </div>
-                                        <div class="flex items-baseline gap-2 mb-2 cursor-pointer" onclick="document.getElementById('query-input').value = 'Give me a detailed analysis of ${asset.ticker}'; sendMessage();">
+                                        <div class="flex items-baseline gap-2 mb-2">
                                             <span class="text-xl font-bold text-white font-mono">${asset.price}</span>
                                             <span class="text-[10px] font-bold ${isPos ? 'text-green-400' : 'text-red-400'}">${isPos?'+':''}${asset.change}</span>
                                         </div>
@@ -794,7 +821,7 @@
                 const dataStr = compareMatch[2]; 
                 const pairs = dataStr.split('|').map(s => s.split(':'));
                 const labels = pairs.map(p => p[0].trim());
-                const dataValues = pairs.map(p => parseFloat((p[1] || '0').replace(/[^0-9\.]/g, '')));
+                const dataValues = pairs.map(p => parseFloat((p[1] || '0').replace(/[^0-9\.\-]/g, '')));
                 const chartId = `compare-${Math.random().toString(36).substr(2, 9)}`;
 
                 const widgetHtml = `<div class="mt-6 mb-4 p-5 rounded-2xl border border-slate-700 bg-[#0a0a0a] w-full max-w-4xl shadow-xl">
@@ -848,7 +875,7 @@
             }
 
             // TIME SERIES CHART WIDGET
-            const chartRegex = /\[INTERACTIVE_CHART\|(?:Ticker\|)?([A-Z0-9\.\^\-]+)(?:\|(bar|line))?\]/i;
+            const chartRegex = /\[INTERACTIVE_CHART\|(?:Ticker\|)?([A-Z0-9\.\^\-\=]+)(?:\|(bar|line))?\]/i;
             const match = chartRegex.exec(processedText);
             if (match) {
                 const ticker = match[1].toUpperCase(); 
