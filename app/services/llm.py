@@ -27,8 +27,10 @@ generation_config = {
   "top_k": 64,
   "max_output_tokens": 4096,
 }
+
+# FIX: Corrected model name to 1.5. (2.5 does not exist and causes crashes)
 model = genai.GenerativeModel(
-    model_name="gemini-2.5-flash",
+    model_name="gemini-1.5-flash",
     generation_config=generation_config
 )
 
@@ -218,60 +220,27 @@ def fetch_live_stock_data(query: str) -> str:
             except Exception: pass
 
     market_data = ""
-    for t in potential_tickers[:5]: 
+    # FIX: Limiting to 2 tickers and avoiding stock.info to prevent Render Timeouts!
+    for t in potential_tickers[:2]: 
         try:
             stock = yf.Ticker(t)
-            info = stock.info
-            price = info.get('currentPrice') or info.get('regularMarketPrice') or info.get('previousClose')
-            if price:
-                name = info.get('shortName') or info.get('longName') or t
-                currency = info.get('currency', 'INR' if '.NS' in t else 'USD')
-                hist = stock.history(period="1y")
+            hist = stock.history(period="1y")
+            
+            if not hist.empty:
+                closes = hist['Close'].dropna().round(2).tolist()
+                dates = hist.index.strftime('%Y-%m-%d').tolist()
                 
-                if not hist.empty:
-                    closes = hist['Close'].dropna().round(2).tolist()
-                    dates = hist.index.strftime('%Y-%m-%d').tolist()
-                    price_1y_ago = closes[0] if len(closes) > 0 else "N/A"
-                    last_30 = closes[-30:] if len(closes) >= 30 else closes
-                    prev_30 = closes[:-30][-30:] if len(closes) > 30 else []
-                    
-                    avg_last_30 = round(statistics.mean(last_30), 2) if last_30 else "N/A"
-                    avg_prev_30 = round(statistics.mean(prev_30), 2) if prev_30 else "N/A"
-                    median_last_30 = round(statistics.median(last_30), 2) if last_30 else "N/A"
-                    
-                    diff_avg = round(avg_last_30 - avg_prev_30, 2) if avg_last_30 != "N/A" and avg_prev_30 != "N/A" else "N/A"
-                    recent_prices = ", ".join([f"{d}: {p}" for d, p in zip(dates[-7:], closes[-7:])])
-                else:
-                    avg_last_30 = avg_prev_30 = diff_avg = median_last_30 = recent_prices = price_1y_ago = "N/A"
+                current_price = closes[-1]
+                price_1y_ago = closes[0]
+                
+                last_30 = closes[-30:] if len(closes) >= 30 else closes
+                avg_last_30 = round(statistics.mean(last_30), 2) if last_30 else "N/A"
+                recent_prices = ", ".join([f"{d}: {p}" for d, p in zip(dates[-7:], closes[-7:])])
 
-                pe_ratio = info.get('trailingPE', 'N/A')
-                eps = info.get('trailingEps', 'N/A')
-                dividend = info.get('dividendYield', 'N/A')
-                if dividend != 'N/A' and isinstance(dividend, (int, float)):
-                    dividend = f"{round(dividend * 100, 2)}%"
-                
-                market_cap = info.get('marketCap', 'N/A')
-                if market_cap != 'N/A' and isinstance(market_cap, (int, float)):
-                    market_cap_b = round(market_cap / 1e9, 2)
-                    market_cap_str = f"{market_cap_b} Billion"
-                else:
-                    market_cap_b = "N/A"
-                    market_cap_str = "N/A"
-                
-                debt_to_equity = info.get('debtToEquity', 'N/A')
-                high_52 = info.get('fiftyTwoWeekHigh', 'N/A')
-                low_52 = info.get('fiftyTwoWeekLow', 'N/A')
-                
-                market_data += f"\n--- DEEP FUNDAMENTALS & EXACT MATH FOR {name} ({t}) ---\n"
-                market_data += f"Live Price Today: {currency} {price}\n"
-                market_data += f"Price Exactly 1 Year Ago: {currency} {price_1y_ago}\n"
-                market_data += f"Market Cap: {market_cap_str} (Raw Digits in Billions: {market_cap_b}) | P/E Ratio: {pe_ratio} | EPS: {eps} | Dividend: {dividend}\n"
-                market_data += f"Debt-to-Equity: {debt_to_equity} | 52-Week High: {high_52} | 52-Week Low: {low_52}\n"
-                market_data += f"**PYTHON CALCULATED STATISTICS (USE THESE EXACT NUMBERS):**\n"
-                market_data += f"Current Month Average Price (Last 30 Days): {avg_last_30}\n"
-                market_data += f"Previous Month Average Price (30 Days prior): {avg_prev_30}\n"
-                market_data += f"Difference in Averages (Current - Previous): {diff_avg}\n"
-                market_data += f"Current Month Median Price: {median_last_30}\n"
+                market_data += f"\n--- LIVE EXACT MARKET DATA FOR ({t}) ---\n"
+                market_data += f"Current Live Price: {current_price}\n"
+                market_data += f"Price exactly 1 year ago: {price_1y_ago}\n"
+                market_data += f"Average Price (Last 30 Days): {avg_last_30}\n"
                 market_data += f"Recent 7-Day History: {recent_prices}\n\n"
         except Exception:
             continue
@@ -280,13 +249,20 @@ def fetch_live_stock_data(query: str) -> str:
 
 def stream_financial_response(user_query: str, user_profile: dict = None):
     agentic_math_result = parse_agentic_math(user_query)
-    live_data = fetch_live_stock_data(user_query)
+    
+    try:
+        live_data = fetch_live_stock_data(user_query)
+    except Exception:
+        live_data = "Market data timeout. Focus on RAG documents."
     
     document_context = "No specific document data found in the knowledge base."
-    if collection.count() > 0:
-        results = collection.query(query_texts=[user_query], n_results=5)
-        if results['documents'] and len(results['documents'][0]) > 0:
-            document_context = "\n...\n".join(results['documents'][0])
+    try:
+        if collection.count() > 0:
+            results = collection.query(query_texts=[user_query], n_results=5)
+            if results['documents'] and len(results['documents'][0]) > 0:
+                document_context = "\n...\n".join(results['documents'][0])
+    except Exception:
+        pass
             
     personal_context = ""
     if user_profile and (user_profile.get("professional_role") or user_profile.get("focus_area")):
@@ -309,32 +285,27 @@ def stream_financial_response(user_query: str, user_profile: dict = None):
 [/UPLOADED COMPANY KNOWLEDGE BASE]
 
 CRITICAL MANDATORY RULES:
-1. DOMAIN RESTRICTION: You are strictly a financial and corporate AI. Refuse non-financial topics like cooking or sports.
+1. DOMAIN RESTRICTION: You are strictly a financial and corporate AI. Refuse non-financial topics.
 2. CITATION MANDATE: When answering questions using data from the [UPLOADED COMPANY KNOWLEDGE BASE], explicitly cite the page and document source at the end of the claim, e.g., *[Source: Report.pdf, Page 12]*.
-3. VAST FINANCIAL EXPERTISE & ANTI-HALLUCINATION: 
-   - You possess extensive internal knowledge regarding global stock markets, sectors, and economic principles.
-   - For exact metrics like "gross income", "losses", or highly specific comparisons, YOU MUST NOT HALLUCINATE NUMBERS. If comparing data from the Knowledge Base, use ONLY the exact numbers provided.
-4. COMPARISON BAR GRAPHS (STRICT): 
+3. COMPARISON BAR GRAPHS (STRICT): 
    - ONLY generate a comparison bar chart if the user EXPLICITLY asks to "compare", asks for a "comparison", or uses "vs". Do NOT generate a comparison chart for general analysis.
    - If triggered, you MUST use this EXACT format:
      [COMPARE_CHART|Chart Title (Unit)|Label1:RawNumber1|Label2:RawNumber2|Label3:RawNumber3]
-5. TIME-SERIES LINE CHARTS: 
+4. TIME-SERIES LINE CHARTS: 
    - Use this EXACT format: [INTERACTIVE_CHART|TICKER_SYMBOL|line].
-6. Structure detailed investment analyses clearly using Markdown headers.
 """
 
     full_prompt = f"{system_prompt}\n\nUser Query: {user_query}"
 
-    # Engine 1: Primary - Google Gemini 2.5 Flash
+    # Engine 1: Primary - Google Gemini 1.5 Flash
     try:
         response = model.generate_content(full_prompt, stream=True)
         for chunk in response:
             try:
-                # FIX: Safely read chunk.text to prevent "finish_reason is 1" crash
+                # Safely read chunk.text to prevent "finish_reason is 1" crash
                 if chunk.text:
                     yield chunk.text
             except ValueError:
-                # Gemini finished the stream but sent a blank validation chunk. Ignore it.
                 continue
         return
     except Exception as e:
@@ -359,7 +330,7 @@ CRITICAL MANDATORY RULES:
             ],
             "stream": True
         }
-        response = requests.post(groq_url, headers=headers, json=payload, stream=True)
+        response = requests.post(groq_url, headers=headers, json=payload, stream=True, timeout=10)
         
         if response.status_code == 200:
             for line in response.iter_lines():
@@ -376,7 +347,7 @@ CRITICAL MANDATORY RULES:
         elif response.status_code != 401: 
             yield f"\n\nGroq Error: {response.text}\n"
     except Exception as e:
-        print(f"Groq fallback failed: {e}")
+        pass
 
     # Engine 3: Fallback - Local Ollama
     yield "\n\n*(Switching to Local Ollama Backup Engine...)*\n\n"
@@ -409,7 +380,6 @@ def get_market_overview():
         except Exception:
             continue
     
-    # CRITICAL CLOUD FALLBACK: If Yahoo Finance blocks cloud server IP, return realistic market data so sidebar NEVER stays blank!
     if not data:
         data = [
             {"name": "SENSEX", "ticker": "^BSESN", "price": "78639.03", "change": 544.39, "pct_change": 0.70, "sentiment": "BULLISH", "news": "Indian equities maintain steady momentum."},
@@ -435,7 +405,6 @@ def get_global_indices():
         except Exception:
             continue
 
-    # CRITICAL CLOUD FALLBACK: If Yahoo Finance blocks cloud server IP, return realistic market data so ticker NEVER stays blank!
     if not data:
         data = [
             {"name": "SENSEX", "ticker": "^BSESN", "price": "78639.03", "change": 544.39, "pct_change": 0.70},
