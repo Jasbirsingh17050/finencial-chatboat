@@ -145,33 +145,51 @@ def get_yahoo_history(ticker: str, period: str = "1y", interval: str = "1d"):
 
 def fetch_live_stock_data(query: str) -> str:
     query_lower = query.lower()
+    
+    # 1. Clean the query to easily extract acronyms like ttml
+    clean_query = re.sub(r'[^a-zA-Z0-9\s]', '', query_lower)
+    words = clean_query.split()
+
+    ignore_words = {"please", "let", "me", "know", "the", "price", "of", "share", "what", "is", "show", "chart", "for", "stock", "draw", "interactive", "maximum", "timeframe", "from", "launch", "and", "or", "to", "in", "on", "a", "an", "all", "time", "history", "trend", "give", "send", "detail", "details", "about", "company", "world", "market", "calculate", "total", "budget", "combined", "math", "all-time", "invest", "buy", "average", "month", "previous", "mean", "median", "difference", "comparison", "bar", "graph", "worth", "net", "till", "now", "today", "yesterday", "tomorrow", "this", "that", "it", "they", "them", "which", "should", "i", "we", "you", "he", "she", "has", "have", "had", "do", "does", "did", "will", "would", "could", "can", "may", "might", "must", "shall", "be", "am", "are", "was", "were", "been", "being", "tell", "about", "yourself", "yourslef", "ok", "so", "can", "you", "compare", "between", "vs", "versus"}
+
+    potential_tickers = []
+    
+    # 2. Known Overrides for extremely common items
     global_overrides = {
         "sensex": "^BSESN", "nifty": "^NSEI", "itc": "ITC.NS", "hdfc": "HDFCBANK.NS", "sbi": "SBIN.NS",
         "tata motors": "TATAMOTORS.NS", "capgemini": "CAP.PA", "tcs": "TCS.NS", "tata power": "TATAPOWER.NS",
         "reliance": "RELIANCE.NS", "tesla": "TSLA", "apple": "AAPL", "microsoft": "MSFT", "nvidia": "NVDA", 
         "amd": "AMD", "intel": "INTC", "tsmc": "TSM", "tata steel": "TATASTEEL.NS", "jsw steel": "JSWSTEEL.NS", 
-        "jindal steel": "JINDALSTEL.NS", "sail": "SAIL.NS", "gold": "GC=F", "silver": "SI=F"
+        "jindal steel": "JINDALSTEL.NS", "sail": "SAIL.NS", "gold": "GC=F", "silver": "SI=F", "bitcoin": "BTC-USD"
     }
 
-    potential_tickers = []
-    
-    # Force add all mentioned specific tickers
     for key, ticker in global_overrides.items():
         if key in query_lower and ticker not in potential_tickers:
             potential_tickers.append(ticker)
 
-    words = query.split()
+    # 3. ULTIMATE FIX: The "Acronym Brute-Force" Engine
+    # If the user types 'ttml' or 'rvnl', this instantly attaches .NS and .BO and searches Wall Street directly
     for word in words:
-        clean = word.strip(",.!?()[]{}").upper()
-        if (".NS" in clean or ".BO" in clean or (clean.isupper() and len(clean) >= 2 and clean.isalpha())):
-            if clean not in potential_tickers: potential_tickers.append(clean)
+        if len(word) >= 2 and word not in ignore_words:
+            upper_word = word.upper()
+            if upper_word not in potential_tickers: potential_tickers.append(upper_word)
+            if f"{upper_word}.NS" not in potential_tickers: potential_tickers.append(f"{upper_word}.NS")
+            if f"{upper_word}.BO" not in potential_tickers: potential_tickers.append(f"{upper_word}.BO")
 
     market_data = ""
-    for ticker in potential_tickers[:5]:
+    successful_fetches = 0
+
+    # Limit to 3 successful fetches so it doesn't overload Render
+    for ticker in potential_tickers:
+        if successful_fetches >= 3:
+            break
+            
         try:
             stock = yf.Ticker(ticker)
             price = get_latest_yahoo_price(ticker)
-            if price is None: continue
+            
+            if price is None: 
+                continue
             
             try: info = stock.info
             except: info = {}
@@ -182,7 +200,6 @@ def fetch_live_stock_data(query: str) -> str:
             hist = get_yahoo_history(ticker, period="1y", interval="1d")
             if not hist.empty:
                 closes = hist["Close"].astype(float).round(2).tolist()
-                dates = hist.index.strftime("%Y-%m-%d").tolist()
                 price_1y = closes[0] if closes else "N/A"
                 l_30, p_30 = closes[-30:], closes[-60:-30]
                 a_30 = round(statistics.mean(l_30), 2) if l_30 else "N/A"
@@ -195,10 +212,13 @@ def fetch_live_stock_data(query: str) -> str:
             market_data += f"\n--- LIVE MARKET DATA FOR {name} ({ticker}) ---\n"
             market_data += f"Live Price: {currency} {price:.2f} | 1 Yr Ago: {price_1y}\n"
             market_data += f"P/E: {info.get('trailingPE', 'N/A')} | EPS: {info.get('trailingEps', 'N/A')} | Debt/Eq: {info.get('debtToEquity', 'N/A')}\n"
-            market_data += f"Last 30 Days Avg: {a_30} | Prev 30 Days Avg: {p_a_30} | Median: {m_30}\n\n"
-        except: continue
+            market_data += f"Last 30 Days Avg: {a_30} | Prev 30 Days Avg: {p_a_30} | Median: {m_30} | Diff: {d_avg}\n\n"
+            
+            successful_fetches += 1
+        except: 
+            continue
 
-    # Fallback to prevent Gemini refusal if Yahoo blocks the IP
+    # 4. Final Fallback if Cloud IP gets blocked
     if not market_data and potential_tickers:
         fallback_db = {"GC=F": "2420.50", "SI=F": "28.40", "TATAPOWER.NS": "382.00", "TATASTEEL.NS": "165.50", "JINDALSTEL.NS": "920.00", "JSWSTEEL.NS": "890.00"}
         for t in potential_tickers[:3]:
@@ -224,7 +244,7 @@ def stream_financial_response(user_query: str, user_profile: dict = None):
         personal_context = f"\n[USER PROFILE]\nName: {user_profile.get('full_name', 'User')}\nRole: {user_profile.get('professional_role', 'Unknown')}\nFocus: {user_profile.get('focus_area', 'Unknown')}\n"
 
     system_prompt = f"""
-You are FinanceVision AI, an elite financial advisory engine and corporate RAG assistant.
+You are FinanceVision AI, an elite financial advisory engine.
 {personal_context}
 {math_result}
 [LIVE MARKET DATA]
@@ -235,14 +255,14 @@ You are FinanceVision AI, an elite financial advisory engine and corporate RAG a
 [/UPLOADED COMPANY KNOWLEDGE BASE]
 
 CRITICAL MANDATORY RULES:
-1. STRICT DOMAIN RESTRICTION: You are strictly a financial AI. If the user asks about fictional characters (like Spiderman, Batman), movies, sports, or non-financial topics, YOU MUST REFUSE IMMEDIATELY. Reply exactly: "I am FinanceVision, a strictly financial AI. I cannot answer queries about non-financial topics like [Topic]."
-2. IDENTITY: If the user asks who you are, introduce yourself as FinanceVision, a financial advisory AI. Never refuse to introduce yourself.
-3. NEVER APOLOGIZE FOR DATA: Use the [LIVE MARKET DATA] or [UPLOADED COMPANY KNOWLEDGE BASE] exactly as provided. Never say you don't have real-time data if it is printed above.
-4. SINGLE STOCK LINE CHARTS (MANDATORY): If the user asks about ONE specific stock, metal (gold/silver), or index, ONLY output text and ONE Line Chart like this:
-[INTERACTIVE_CHART|TICKER_SYMBOL|line]
-5. COMPARISON BAR GRAPHS (FOR 2+ ITEMS ONLY): If the user explicitly asks to COMPARE two or more companies, years, or metrics, you MUST output a Bar Graph:
+1. STRICT DOMAIN RESTRICTION: You are strictly a financial AI. 
+CRITICAL EXCEPTION: If a user asks about ANY unrecognized word or acronym (e.g., "ttml", "rvnl", "zomato"), YOU MUST ASSUME IT IS A STOCK TICKER OR COMPANY. DO NOT treat it as a movie, game, or fictional character. NEVER refuse a query containing a potential company acronym. If you truly don't know it, say you couldn't find the market data for that specific ticker.
+2. If the user explicitly asks to "compare" companies or stocks, ONLY use a Bar Graph:
 [COMPARE_CHART|Chart Title|Label1:RawNumber1|Label2:RawNumber2]
-NEVER use a Bar Graph for a single stock.
+3. If the user asks for the trend, analysis, or details of a SINGLE company, ONLY use a Line Chart:
+[INTERACTIVE_CHART|TICKER_SYMBOL|line]
+4. For investment analysis, structure your text using: ### Fundamental Analysis, ### Pros & Cons, ### Final Verdict.
+5. Never apologize for missing data. Just answer using whatever data you have above.
 """
     full_prompt = f"{system_prompt}\n\nUser Query: {user_query}"
 
@@ -252,10 +272,10 @@ NEVER use a Bar Graph for a single stock.
             for chunk in response:
                 try:
                     if hasattr(chunk, "text") and chunk.text: yield chunk.text
-                except ValueError: pass # Catch finish_reason=1 silent bug safely
+                except ValueError: pass # Catch Gemini finish_reason=1 silent bug safely
             return
         except Exception as e:
-            pass # Proceed silently to Groq
+            pass # Proceed silently to Groq on 404 or 429 error
 
     if GROQ_API_KEY:
         yield "\n\n*(Switching to Groq Backup Engine...)*\n\n"

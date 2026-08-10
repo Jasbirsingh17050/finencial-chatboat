@@ -13,12 +13,13 @@
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #050505; color: #ffffff; }
         
-        /* Ultra Glassmorphism */
+        /* Premium Frosted Glass with Noise Texture */
         .glass-panel { 
             background: rgba(15, 15, 15, 0.6); 
             backdrop-filter: blur(16px); 
             -webkit-backdrop-filter: blur(16px);
             border: 1px solid rgba(255, 255, 255, 0.05); 
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
         }
         
         /* Holographic Cyber-Grid Background */
@@ -71,7 +72,7 @@
         .toast-enter { animation: slideInRight 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
         .toast-exit { animation: fadeOut 0.4s forwards; }
 
-        /* Dynamic Cursor Glow */
+        /* Dynamic Cursor Glow - Highly Attractive Screen Blend Mode */
         #glow-pointer {
             position: fixed;
             top: 0;
@@ -79,9 +80,10 @@
             width: 100vw;
             height: 100vh;
             pointer-events: none;
-            background: radial-gradient(circle 500px at var(--x, 50vw) var(--y, 50vh), rgba(220, 38, 38, 0.15), transparent 70%);
+            background: radial-gradient(circle 600px at var(--x, 50vw) var(--y, 50vh), rgba(220, 38, 38, 0.15), transparent 60%);
             z-index: 9999;
-            transition: background 0.1s ease;
+            transition: background 0.05s ease;
+            mix-blend-mode: screen; 
         }
 
         /* Pulsing AI Typing Indicator */
@@ -93,7 +95,7 @@
         .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
         @keyframes pulse-dot { 0%, 100% { opacity: 0.2; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.3); } }
 
-        /* NEW: Ambient Floating Data Orbs */
+        /* Ambient Floating Data Orbs */
         .ambient-orb {
             position: absolute;
             border-radius: 50%;
@@ -111,16 +113,7 @@
             100% { transform: translate(50px, 50px) scale(1.1); }
         }
 
-        /* NEW: Premium Frosted Glass with Noise Texture */
-        .glass-panel { 
-            background: rgba(15, 15, 15, 0.6); 
-            backdrop-filter: blur(16px); 
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.05); 
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
-        }
-
-        /* NEW: Hyper-Premium Laser (Removed Blurry Scanlines) */
+        /* Hyper-Premium Laser */
         .laser-sweep {
             position: absolute; top: 0; left: 0; width: 100%; height: 2px;
             background: rgba(220, 38, 38, 0.4);
@@ -135,7 +128,7 @@
             100% { top: 110%; opacity: 0; }
         }
 
-        /* NEW: Vertical Infinite Scroll (Pauses on Hover!) */
+        /* Vertical Infinite Scroll (Pauses on Hover!) */
         .vertical-marquee-container {
             overflow: hidden; height: 100%; display: flex; flex-direction: column;
         }
@@ -151,7 +144,7 @@
             100% { transform: translateY(-50%); }
         }
 
-        /* NEW: Neon Input Glow & Radar Ping */
+        /* Neon Input Glow & Radar Ping */
         .glow-input:focus-within {
             box-shadow: 0 0 30px rgba(220, 38, 38, 0.35);
             border-color: rgba(220, 38, 38, 0.6);
@@ -163,7 +156,7 @@
             75%, 100% { transform: scale(3); opacity: 0; }
         }
 
-        /* PHASE 5: ULTIMATE WOW FEATURES */
+        /* ULTIMATE WOW FEATURES */
         .breathing-glow {
             animation: breath-glow 3s ease-in-out infinite alternate;
             border: 1px solid rgba(220, 38, 38, 0.4);
@@ -259,7 +252,6 @@
         </div>
     </div>
 
-    <!-- Delete Confirmation Modal -->
     <div id="delete-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md transition-opacity">
         <div class="glass-panel border-slate-700/50 p-8 rounded-3xl max-w-sm w-full shadow-2xl">
             <div class="flex flex-col items-center text-center mb-6">
@@ -278,7 +270,7 @@
 
     <div id="app-screen" class="hidden w-full h-full flex flex-col z-10 relative bg-[#050505]">
         
-        <!-- NEW: Ambient Background Orbs & Laser Sweep -->
+        <!-- Ambient Background Orbs & Laser Sweep -->
         <div class="ambient-orb orb-1"></div>
         <div class="ambient-orb orb-2"></div>
         <div class="laser-sweep"></div>
@@ -298,8 +290,8 @@
 
         <div class="flex-1 flex overflow-hidden relative">
             
-            <!-- Left Sidebar (Profile, History, RAG Upload) -->
-            <div id="sidebar-panel" class="fixed md:relative inset-y-0 left-0 w-72 border-r border-slate-800/50 glass-panel flex flex-col p-5 h-full z-30 shrink-0 transform -translate-x-full md:translate-x-0 transition-transform duration-300">
+            <!-- Left Sidebar (Profile, History, RAG Upload) - Made Slimmer -->
+            <div id="sidebar-panel" class="fixed md:relative inset-y-0 left-0 w-64 border-r border-slate-800/50 glass-panel flex flex-col p-5 h-full z-30 shrink-0 transform -translate-x-full md:translate-x-0 transition-transform duration-300">
                 <div class="flex items-center justify-between mb-6">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 bg-red-900/20 border border-red-500/30 rounded-xl flex items-center justify-center shadow-[0_0_15px_rgba(220,38,38,0.2)] relative">
@@ -387,9 +379,8 @@
                 </div>
             </div>
 
-            <!-- Right Sidebar: Live Markets (Shrunk width to w-72 for more chat space) -->
-            <!-- Right Sidebar: Live Markets -->
-            <div class="hidden xl:flex w-72 border-l border-slate-800/50 glass-panel flex-col h-full z-30 shrink-0">
+            <!-- Right Sidebar: Live Markets (Shrunk width to w-60 to maximize chat space) -->
+            <div class="hidden xl:flex w-60 border-l border-slate-800/50 glass-panel flex-col h-full z-30 shrink-0">
                 <div class="p-5 border-b border-slate-800/50 shrink-0 bg-[#050505]/40">
                     <h2 class="font-bold text-white flex items-center gap-2 text-base">
                         <i class="ph-bold ph-trend-up text-red-500"></i> Live Markets
@@ -471,7 +462,7 @@
     </div>
 
     <script>
-        // --- DYNAMIC CURSOR GLOW ---
+        // DYNAMIC CURSOR GLOW - Beautiful blend mode screen overlay
         document.addEventListener('mousemove', (e) => {
             const glow = document.getElementById('glow-pointer');
             if(glow) {
@@ -520,6 +511,14 @@
             }, 4000);
         }
 
+        // --- STREAMING_CHUNK:Global Quick-Query Trigger... ---
+        // Expose triggerQuery globally so sidebar cards can be clicked securely
+        window.triggerQuery = function(text) {
+            const input = document.getElementById('query-input');
+            input.value = text;
+            sendMessage();
+        };
+
         function toggleMobileSidebar() {
             const sidebar = document.getElementById('sidebar-panel');
             sidebar.classList.toggle('-translate-x-full');
@@ -539,7 +538,7 @@
             }
         }
 
-        // --- AUTHENTICATION LOGIC ---
+        // --- STREAMING_CHUNK:Authentication Logic... ---
 
         function startOtpTimer() {
             let seconds = 60;
@@ -695,7 +694,7 @@
             location.reload();
         }
 
-        // --- APP INITIALIZATION ---
+        // --- STREAMING_CHUNK:App Initialization... ---
         if (token) {
             document.getElementById('auth-screen').classList.add('hidden');
             document.getElementById('app-screen').classList.remove('hidden');
@@ -750,7 +749,7 @@
             micBtn.onclick = () => showToast("Voice recognition unavailable in this browser.", "error");
         }
 
-        // --- MARKET FEEDS ---
+        // --- STREAMING_CHUNK:Market Feeds and Interactive Watchlist... ---
         function toggleStarTicker(ticker) {
             if (starredTickers.includes(ticker)) {
                 starredTickers = starredTickers.filter(t => t !== ticker);
@@ -776,7 +775,7 @@
                             data.forEach(index => {
                                 const isPos = index.change >= 0;
                                 htmlContent += `
-                                    <div class="flex items-center gap-3 px-8 cursor-pointer hover:bg-white/10 transition-colors h-full" onclick="document.getElementById('query-input').value = 'Draw chart for ${index.ticker}'; sendMessage();">
+                                    <div class="flex items-center gap-3 px-8 cursor-pointer hover:bg-white/10 transition-colors h-full" onclick="window.triggerQuery('Draw chart for ${index.ticker}')">
                                         <span class="font-bold text-slate-200 text-[11px]">${index.name}</span>
                                         <span class="text-white font-mono text-[11px] font-bold">${index.price}</span>
                                         <span class="${isPos ? 'text-green-400 bg-green-900/20 border-green-500/30' : 'text-red-400 bg-red-900/20 border-red-500/30'} font-bold text-[10px] px-2 py-0.5 rounded border shadow-sm">${isPos?'+':''}${index.change}</span>
@@ -805,15 +804,15 @@
                             data.forEach(asset => {
                                 const isPos = asset.change >= 0;
                                 const isStarred = starredTickers.includes(asset.ticker);
-                                // NEW: Adding premium hover lift effect and 3D Tilt
+                                // Pointer-events-auto and dedicated triggerQuery ensures clicks work flawlessly!
                                 cardsHtml += `
-                                    <div onmousemove="tiltCard(event, this)" onmouseleave="resetTilt(this)" onclick="document.getElementById('query-input').value = 'Give me a detailed analysis of ${asset.ticker}'; sendMessage();" class="tilt-card p-4 rounded-xl glass-panel border ${isStarred ? 'border-yellow-500/50 shadow-[0_0_15px_rgba(234,179,8,0.15)]' : 'border-slate-700/50'} hover:border-red-500/50 hover:bg-[#111]/80 hover:-translate-y-1 transition-all cursor-pointer relative z-20 shadow-md group">
-                                        <div class="flex justify-between mb-2 items-start">
+                                    <div onmousemove="tiltCard(event, this)" onmouseleave="resetTilt(this)" onclick="window.triggerQuery('Give me a detailed analysis of ${asset.ticker}')" class="tilt-card p-4 rounded-xl glass-panel border ${isStarred ? 'border-yellow-500/50 shadow-[0_0_15px_rgba(234,179,8,0.15)]' : 'border-slate-700/50'} hover:border-red-500/50 hover:bg-[#111]/80 hover:-translate-y-1 transition-all cursor-pointer relative z-20 shadow-md group" style="pointer-events: auto;">
+                                        <div class="flex justify-between mb-2 items-start pointer-events-none">
                                             <div>
-                                                <h3 class="font-bold text-white text-[13px] pointer-events-none group-hover:text-red-400 transition-colors">${asset.name}</h3>
-                                                <p class="text-[10px] text-slate-400 font-bold pointer-events-none">${asset.ticker}</p>
+                                                <h3 class="font-bold text-white text-[13px] group-hover:text-red-400 transition-colors">${asset.name}</h3>
+                                                <p class="text-[10px] text-slate-400 font-bold">${asset.ticker}</p>
                                             </div>
-                                            <button onclick="event.stopPropagation(); toggleStarTicker('${asset.ticker}');" class="text-slate-500 hover:text-yellow-400 relative z-30 transition-colors hover:scale-110">
+                                            <button style="pointer-events: auto;" onclick="event.stopPropagation(); toggleStarTicker('${asset.ticker}');" class="text-slate-500 hover:text-yellow-400 relative z-30 transition-colors hover:scale-110">
                                                 <i class="ph-fill ph-star ${isStarred ? 'text-yellow-400' : 'text-slate-600'} text-base"></i>
                                             </button>
                                         </div>
@@ -824,7 +823,7 @@
                                         <p class="text-[10px] text-slate-400 border-t border-slate-700/50 pt-2 mt-2 leading-relaxed pointer-events-none">${asset.news}</p>
                                     </div>`;
                             });
-                            // NEW: Wrap in vertical marquee that repeats twice for an infinite loop
+                            // Vertical marquee that stops on hover so users can click stocks
                             sidebar.innerHTML = `<div class="vertical-marquee-container"><div class="vertical-marquee-content">${cardsHtml}${cardsHtml}</div></div>`;
                             runCounters();
                             loaded = true;
@@ -836,7 +835,7 @@
             }
         }
 
-        // --- SESSION MANAGEMENT ---
+        // --- STREAMING_CHUNK:Session Management... ---
         async function loadSessions(autoLoadFirst = false) {
             try {
                 const res = await fetch(`${BACKEND_URL}/chat/sessions`, { headers: { "Authorization": `Bearer ${token}` } });
@@ -878,11 +877,10 @@
             const chatBox = document.getElementById('chat-box');
             chatBox.innerHTML = '';
             
-            // WOW Feature: Terminal Typing Effect
+            // Hacker-Style Terminal Typing Effect
             const welcomeText = "Secure channel active. I am FinanceVision, your financial and corporate intelligence assistant. How can I help you analyze the market today?";
             const div = appendMessage("Bot", "");
             
-            // Create a blinking cursor element
             let i = 0;
             div.innerHTML = '<span class="border-r-2 border-red-500 animate-pulse pr-1"></span>';
             
@@ -895,7 +893,7 @@
                     clearInterval(typingInterval);
                     div.innerHTML = welcomeText;
                 }
-            }, 30); // Speed of typing
+            }, 30); 
         }
 
         async function loadHistory(id) {
@@ -916,7 +914,7 @@
             chatBox.scrollTop = chatBox.scrollHeight;
         }
 
-        // --- STREAMING_CHUNK:Chat UI, Voice TTS, and Widget Rendering... ---
+        // --- STREAMING_CHUNK:Chat UI, Voice TTS, and Interactive Widget Rendering... ---
         function speakText(btnElement) {
             if (!('speechSynthesis' in window)) return showToast("TTS unavailable in browser.", "error");
             window.speechSynthesis.cancel();
@@ -953,7 +951,6 @@
             const chatBox = document.getElementById('chat-box');
             const div = document.createElement('div');
             
-            // Add slide up animation class
             div.className = "message-enter flex mb-6 w-full"; 
             
             if (sender === "User") {
@@ -1101,7 +1098,6 @@
                 const isPos = data.prices[data.prices.length-1] >= data.prices[0];
                 const lineColor = isPos ? '#22c55e' : '#ef4444';
                 
-                // Create gradient fill for line chart
                 let fillColor = 'transparent';
                 if(chartType === 'line') {
                     fillColor = ctx.createLinearGradient(0, 0, 0, ctx.canvas.height);
@@ -1129,7 +1125,7 @@
                             pointRadius: 0, 
                             pointHitRadius: 15, 
                             fill: true, 
-                            tension: 0.3 // Smooth curved lines
+                            tension: 0.3 
                         }] 
                     },
                     options: { 
@@ -1167,7 +1163,6 @@
             input.value = '';
             appendMessage("User", query);
             
-            // NEW: Premium typing indicator
             const contentDiv = appendMessage("Bot", `
                 <div class="flex items-center gap-3">
                     <span class="typing-dots inline-flex mt-1"><span></span><span></span><span></span></span>
@@ -1312,7 +1307,7 @@
             } catch (e) { showToast("Failed to compile report.", "error"); }
         }
 
-        // --- PHASE 5: ULTIMATE WOW FEATURES ---
+        // --- STREAMING_CHUNK:Final Interactive Masterpiece Features... ---
         
         // 1. Cyber-Decode Boot Sequence
         function scrambleText(elementId, finalString) {
@@ -1357,7 +1352,7 @@
                     counter.innerText = counter.getAttribute('data-target'); 
                     return;
                 }
-                const duration = 1000; // 1 second
+                const duration = 1000; 
                 const stepTime = 30;
                 const steps = duration / stepTime;
                 const increment = target / steps;
