@@ -93,13 +93,34 @@
         .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
         @keyframes pulse-dot { 0%, 100% { opacity: 0.2; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.3); } }
 
-        /* NEW: Hyper-Premium Terminal Scanlines & Laser */
-        .scanlines {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(to bottom, transparent 50%, rgba(0, 0, 0, 0.2) 51%);
-            background-size: 100% 4px;
-            pointer-events: none; z-index: 9997;
+        /* NEW: Ambient Floating Data Orbs */
+        .ambient-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.4;
+            animation: float 20s infinite ease-in-out alternate;
+            pointer-events: none;
+            z-index: 0;
         }
+        .orb-1 { width: 400px; height: 400px; background: rgba(220, 38, 38, 0.15); top: -100px; left: -100px; }
+        .orb-2 { width: 500px; height: 500px; background: rgba(234, 88, 12, 0.1); bottom: -200px; right: -100px; animation-delay: -5s; }
+        
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(50px, 50px) scale(1.1); }
+        }
+
+        /* NEW: Premium Frosted Glass with Noise Texture */
+        .glass-panel { 
+            background: rgba(15, 15, 15, 0.6); 
+            backdrop-filter: blur(16px); 
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05); 
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+        }
+
+        /* NEW: Hyper-Premium Laser (Removed Blurry Scanlines) */
         .laser-sweep {
             position: absolute; top: 0; left: 0; width: 100%; height: 2px;
             background: rgba(220, 38, 38, 0.4);
@@ -242,8 +263,9 @@
 
     <div id="app-screen" class="hidden w-full h-full flex flex-col z-10 relative bg-[#050505]">
         
-        <!-- NEW: Terminal Overlays -->
-        <div class="scanlines"></div>
+        <!-- NEW: Ambient Background Orbs & Laser Sweep -->
+        <div class="ambient-orb orb-1"></div>
+        <div class="ambient-orb orb-2"></div>
         <div class="laser-sweep"></div>
 
         <!-- Top Marquee Ticker -->
@@ -833,8 +855,27 @@
 
         function startNewChat() {
             currentSessionId = null; 
-            document.getElementById('chat-box').innerHTML = '';
-            appendMessage("Bot", "Secure channel active. I am FinanceVision, your financial and corporate intelligence assistant. How can I help you analyze the market today?");
+            const chatBox = document.getElementById('chat-box');
+            chatBox.innerHTML = '';
+            
+            // WOW Feature: Terminal Typing Effect
+            const welcomeText = "Secure channel active. I am FinanceVision, your financial and corporate intelligence assistant. How can I help you analyze the market today?";
+            const div = appendMessage("Bot", "");
+            
+            // Create a blinking cursor element
+            let i = 0;
+            div.innerHTML = '<span class="border-r-2 border-red-500 animate-pulse pr-1"></span>';
+            
+            const typingInterval = setInterval(() => {
+                if (i < welcomeText.length) {
+                    div.innerHTML = welcomeText.substring(0, i + 1) + '<span class="border-r-2 border-red-500 animate-pulse pr-1"></span>';
+                    i++;
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                } else {
+                    clearInterval(typingInterval);
+                    div.innerHTML = welcomeText;
+                }
+            }, 30); // Speed of typing
         }
 
         async function loadHistory(id) {
