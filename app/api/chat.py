@@ -56,11 +56,11 @@ async def upload_document(file: UploadFile = File(...)):
         return JSONResponse(content={"message": result}, status_code=400)
 
 @router.get("/market")
-async def get_market_data(user: models.User = Depends(get_current_user)):
+async def get_market_data():
     return JSONResponse(content=get_market_overview())
 
 @router.get("/indices")
-async def get_indices_data(user: models.User = Depends(get_current_user)):
+async def get_indices_data():
     return JSONResponse(content=get_global_indices())
 
 # --- UPGRADED: USER PROFILE ENDPOINTS (RAG FOCUS) ---

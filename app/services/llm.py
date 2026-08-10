@@ -36,7 +36,6 @@ chroma_client = chromadb.PersistentClient(path="./chroma_db")
 collection = chroma_client.get_or_create_collection(name="financevision_knowledge_base")
 
 def chunk_text_with_overlap(text: str, chunk_size: int = 300, overlap: int = 50):
-    """Slices text into overlapping chunks to preserve context across boundaries."""
     words = text.split()
     chunks = []
     for i in range(0, len(words), chunk_size - overlap):
@@ -46,7 +45,6 @@ def chunk_text_with_overlap(text: str, chunk_size: int = 300, overlap: int = 50)
     return chunks
 
 def process_uploaded_file(file_path: str, filename: str) -> str:
-    """Ingests uploaded CSV or PDF documents into ChromaDB with explicit Page Citation metadata."""
     try:
         text_chunks = []
         if filename.endswith(".csv"):
@@ -79,7 +77,6 @@ def process_uploaded_file(file_path: str, filename: str) -> str:
         return str(e)
 
 def calculate_cagr(start_value: float, end_value: float, periods: float) -> str:
-    """Computes Compound Annual Growth Rate (CAGR) with zero math hallucination."""
     if start_value <= 0 or periods <= 0:
         return "Invalid parameters for CAGR calculation."
     cagr = ((end_value / start_value) ** (1 / periods) - 1) * 100
@@ -92,7 +89,6 @@ def calculate_cagr(start_value: float, end_value: float, periods: float) -> str:
             f"- **Total Return:** **{total_growth:.2f}%**\n")
 
 def calculate_dcf(initial_fcf: float, growth_rate: float, discount_rate: float, terminal_growth: float, years: int = 5) -> str:
-    """Computes Discounted Cash Flow (DCF) Intrinsic Value model natively in Python."""
     try:
         pv_cf = []
         current_fcf = initial_fcf
@@ -118,7 +114,6 @@ def calculate_dcf(initial_fcf: float, growth_rate: float, discount_rate: float, 
         return f"DCF Calculation Error: {e}"
 
 def calculate_emi(principal: float, annual_rate: float, tenure_years: float) -> str:
-    """Computes Loan Amortization / EMI deterministically."""
     monthly_rate = (annual_rate / 100) / 12
     tenure_months = int(tenure_years * 12)
     if monthly_rate == 0:
@@ -137,7 +132,6 @@ def calculate_emi(principal: float, annual_rate: float, tenure_years: float) -> 
             f"- **Total Payment Amount:** ${total_payable:,.2f}\n")
 
 def parse_agentic_math(user_query: str) -> str:
-    """Intercepts quantitative queries and executes deterministic Python math routines."""
     q = user_query.lower()
     
     if "cagr" in q or "compound annual" in q:
@@ -180,7 +174,8 @@ def fetch_live_stock_data(query: str) -> str:
         "reliance": "RELIANCE.NS", "tesla": "TSLA", "apple": "AAPL", "microsoft": "MSFT", 
         "nvidia": "NVDA", "amd": "AMD", "intel": "INTC", "tsmc": "TSM",
         "tata steel": "TATASTEEL.NS", "jsw steel": "JSWSTEEL.NS", "jindal steel": "JINDALSTEL.NS",
-        "sail": "SAIL.NS", "posco": "005490.KS", "arcelormittal": "MT"
+        "sail": "SAIL.NS", "posco": "005490.KS", "arcelormittal": "MT",
+        "gold": "GC=F", "silver": "SI=F", "crude oil": "CL=F", "bitcoin": "BTC-USD"
     }
     
     potential_tickers = []
@@ -316,21 +311,16 @@ def stream_financial_response(user_query: str, user_profile: dict = None):
 CRITICAL MANDATORY RULES:
 1. DOMAIN RESTRICTION: You are strictly a financial and corporate AI. Refuse non-financial topics like cooking or sports.
 2. CITATION MANDATE: When answering questions using data from the [UPLOADED COMPANY KNOWLEDGE BASE], explicitly cite the page and document source at the end of the claim, e.g., *[Source: Report.pdf, Page 12]*.
-3. VAST FINANCIAL EXPERTISE: You possess extensive internal knowledge regarding global stock markets, sectors, company valuations, net worth, financials, and economic principles. You MUST answer stock analysis, sector queries (e.g., steel, IT, banking), and company comparisons using your extensive internal knowledge base combined with any [LIVE MARKET DATA] provided. NEVER say "I do not have access to live data for X" or "this information is not available in my knowledge base" for standard financial and stock queries!
-4. MANDATORY COMPARISON BAR GRAPHS: 
-   - If the user asks for a PRICE COMPARISON across time (e.g., "1 year ago vs now", "previous year price till now", "price comparison", "till now comparison"), YOU MUST GENERATE A COMPARISON BAR CHART comparing the historical price (1 Year Ago) to today's price using this EXACT format:
-     [COMPARE_CHART|Stock Price Comparison (in Currency)|1 Year Ago:RawNumber1|Today:RawNumber2]
-   - If the user asks to compare multiple companies, net worth, market caps, or revenues, YOU MUST DRAW A BAR GRAPH using this EXACT format:
+3. VAST FINANCIAL EXPERTISE & ANTI-HALLUCINATION: 
+   - You possess extensive internal knowledge regarding global stock markets, sectors, and economic principles.
+   - For exact metrics like "gross income", "losses", or highly specific comparisons, YOU MUST NOT HALLUCINATE NUMBERS. If comparing data from the Knowledge Base, use ONLY the exact numbers provided.
+4. COMPARISON BAR GRAPHS (STRICT): 
+   - ONLY generate a comparison bar chart if the user EXPLICITLY asks to "compare", asks for a "comparison", or uses "vs". Do NOT generate a comparison chart for general analysis.
+   - If triggered, you MUST use this EXACT format:
      [COMPARE_CHART|Chart Title (Unit)|Label1:RawNumber1|Label2:RawNumber2|Label3:RawNumber3]
-   - CRITICAL CHART RULE: Numbers MUST be raw digits only! NO dollar signs ($), NO commas, NO letters like 'B' or 'Billion'. Put currency/units strictly in the Chart Title!
-   - Example 1: [COMPARE_CHART|Tata Power Price Comparison (in INR)|1 Year Ago:250|Today:382]
-   - Example 2: [COMPARE_CHART|Market Cap Comparison (in $ Billions)|Tata Steel:18|JSW Steel:16|Jindal Steel:12|POSCO:15|ArcelorMittal:28]
-5. TIME-SERIES LINE CHARTS: If the user asks for a specific stock price trend or line chart over time, include: [INTERACTIVE_CHART|TICKER_SYMBOL|line].
-6. INVESTMENT ADVISOR FRAMEWORK: Structure investment responses clearly using Markdown headers:
-   ### Fundamental Analysis
-   ### Pros & Cons
-   ### Risk Assessment & Future Growth Predictions
-   ### Final Verdict
+5. TIME-SERIES LINE CHARTS: 
+   - Use this EXACT format: [INTERACTIVE_CHART|TICKER_SYMBOL|line].
+6. Structure detailed investment analyses clearly using Markdown headers.
 """
 
     full_prompt = f"{system_prompt}\n\nUser Query: {user_query}"
@@ -339,7 +329,13 @@ CRITICAL MANDATORY RULES:
     try:
         response = model.generate_content(full_prompt, stream=True)
         for chunk in response:
-            if chunk.text: yield chunk.text
+            try:
+                # FIX: Safely read chunk.text to prevent "finish_reason is 1" crash
+                if chunk.text:
+                    yield chunk.text
+            except ValueError:
+                # Gemini finished the stream but sent a blank validation chunk. Ignore it.
+                continue
         return
     except Exception as e:
         error_msg = str(e)
